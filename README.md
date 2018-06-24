@@ -24,3 +24,4 @@ dowel includes two libraries for its dependencies: [gl-matrix](https://github.co
 * refactor gl into a singleton module
 * screenshots
 * add rollup
+* documentation

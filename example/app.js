@@ -19,7 +19,8 @@ can.height = gl.canvas.clientHeight;
 gl.enable(gl.DEPTH_TEST);
 
 const scene = new Scene();
-const camera = new Camera(gl,
+const camera = new Camera(
+  gl,
   'view cam',
   45,
   gl.canvas.width / gl.canvas.height,
@@ -34,13 +35,7 @@ vec3.set(spot.direction, 0, -1, 0);
 const shapePivot = new Model(gl, 'pivot', null, scene, null, null);
 vec3.set(shapePivot.translation, 0, 0, -5);
 
-gl.enable(gl.CULL_FACE);
-gl.enable(gl.DEPTH_TEST);
-scene.updateMatrix();
-
 init();
-
-enableControls();
 
 async function init() {
   const loaded = await Promise.all([
@@ -56,6 +51,10 @@ async function init() {
   bunny.textures.push(lizardTex);
   bunnyShader.updateSpot(spot);
 
+  gl.enable(gl.CULL_FACE);
+  gl.enable(gl.DEPTH_TEST);
+  scene.updateMatrix();
+  enableControls();
   console.log('loaded');
   animate();
 }
@@ -70,8 +69,6 @@ function animate() {
 
   camera.render(scene);
 }
-
-
 
 function enableControls () {
   gl.canvas.onmousemove = (e) => {
