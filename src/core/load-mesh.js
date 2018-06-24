@@ -1,5 +1,5 @@
-import {Mesh as OBJMesh} from '../../node_modules/webgl-obj-loader/src/index.js';
-import Mesh from '../core/mesh.js';
+import {Mesh as OBJMesh} from '../../node_modules/webgl-obj-loader/src/index';
+import Mesh from '../core/mesh';
 
 export default async function loadMesh (gl, url) {
   const objRequest = new Request(url);

@@ -1,4 +1,4 @@
-import {mat4} from '../../node_modules/gl-matrix/src/gl-matrix.js';
+import {mat4} from '../../node_modules/gl-matrix/src/gl-matrix';
 
 const matrixStack = [];
 const viewMatrix = mat4.create();

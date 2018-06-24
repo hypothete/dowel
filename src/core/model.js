@@ -1,5 +1,5 @@
-import {quat, mat4, vec3} from '../../node_modules/gl-matrix/src/gl-matrix.js';
-import {projectionMatrix, matrixStack} from './matrix-stack.js';
+import {quat, mat4, vec3} from '../../node_modules/gl-matrix/src/gl-matrix';
+import {projectionMatrix, matrixStack} from './matrix-stack';
 
 export default function Model (gl, name, mesh, parent, shader) {
   const model = {

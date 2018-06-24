@@ -1,4 +1,4 @@
-import Mesh from '../core/mesh.js';
+import Mesh from '../core/mesh';
 
 export default function SphereMesh (gl, r, dr, dh) {
   let mesh = new Mesh(gl);

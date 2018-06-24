@@ -1,31 +1,32 @@
 // Core Imports
-import Mesh from './core/mesh.js';
-import Model from './core/model.js';
-import Scene from './core/scene.js';
-import Camera from './core/camera.js';
-import Quad from './core/quad.js';
-import Shader from './core/shader.js';
+import {getGLContext, setGLContext} from './core/gl-context';
+import Mesh from './core/mesh';
+import Model from './core/model';
+import Scene from './core/scene';
+import Camera from './core/camera';
+import Quad from './core/quad';
+import Shader from './core/shader';
 import {
   initShaderProgram,
   loadShader
-} from './core/shader-utils.js';
+} from './core/shader-utils';
 import {
   loadTexture,
   makeGenericTexture,
   makeFramebuffer,
   makeDepthTexture
-} from './core/textures-buffers.js';
-import loadMesh from './core/load-mesh.js';
+} from './core/textures-buffers';
+import loadMesh from './core/load-mesh';
 // Meshes
-import BoxMesh from './meshes/box-mesh.js';
-import PlaneMesh from './meshes/plane-mesh.js';
-import SphereMesh from './meshes/sphere-mesh.js';
+import BoxMesh from './meshes/box-mesh';
+import PlaneMesh from './meshes/plane-mesh';
+import SphereMesh from './meshes/sphere-mesh';
 
 // Lights
-import SpotLight from './lights/spot-light.js';
+import SpotLight from './lights/spot-light';
 
 // gl-matrix objects you'll need
-import {quat, mat4, vec3} from '../node_modules/gl-matrix/src/gl-matrix.js';
+import {quat, mat4, vec3} from '../node_modules/gl-matrix/src/gl-matrix';
 
 export {
   Camera,
@@ -34,6 +35,8 @@ export {
   Scene,
   Quad,
   Shader,
+  getGLContext,
+  setGLContext,
   initShaderProgram,
   loadShader,
   loadTexture,

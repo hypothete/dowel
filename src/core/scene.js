@@ -1,4 +1,4 @@
-import {quat, mat4, vec3} from '../../node_modules/gl-matrix/src/gl-matrix.js';
+import {quat, mat4, vec3} from '../../node_modules/gl-matrix/src/gl-matrix';
 
 export default function Scene () {
   const scene = {

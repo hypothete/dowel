@@ -16,7 +16,6 @@ const keys = {};
 
 can.width = gl.canvas.clientWidth;
 can.height = gl.canvas.clientHeight;
-gl.enable(gl.DEPTH_TEST);
 
 const scene = new Scene();
 const camera = new Camera(

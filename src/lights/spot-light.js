@@ -1,6 +1,6 @@
-import {vec3} from '../../node_modules/gl-matrix/src/gl-matrix.js';
-import {makeDepthTexture} from '../core/textures-buffers.js';
-import Camera from '../core/camera.js';
+import {vec3} from '../../node_modules/gl-matrix/src/gl-matrix';
+import {makeDepthTexture} from '../core/textures-buffers';
+import Camera from '../core/camera';
 
 export default function SpotLight(gl, name, angle) {
   const spot = {

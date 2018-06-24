@@ -1,5 +1,5 @@
-import {quat, mat4, vec3} from '../../node_modules/gl-matrix/src/gl-matrix.js';
-import {viewMatrix, projectionMatrix, matrixStack} from './matrix-stack.js';
+import {quat, mat4, vec3} from '../../node_modules/gl-matrix/src/gl-matrix';
+import {viewMatrix, projectionMatrix, matrixStack} from './matrix-stack';
 
 export default function Camera (gl, name, fov, aspect, near, far, viewport) {
   const cam = {

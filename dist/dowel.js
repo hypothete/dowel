@@ -1,3 +1,13 @@
+var gl;
+
+function getGLContext() {
+  return gl;
+}
+
+function setGLContext(context) {
+  gl = context;
+}
+
 function Mesh (gl, objMesh) {
   let indices = objMesh ? objMesh.indices : [];
   let vertices = objMesh ? objMesh.vertices : [];
@@ -5118,4 +5128,4 @@ function SpotLight(gl, name, angle$$1) {
 
 // Core Imports
 
-export { Camera, Mesh, Model, Scene, Quad, Shader, initShaderProgram, loadShader, loadTexture, loadMesh, makeGenericTexture, makeFramebuffer, makeDepthTexture, BoxMesh, PlaneMesh, SphereMesh, SpotLight, quat, mat4, vec3 };
+export { Camera, Mesh, Model, Scene, Quad, Shader, getGLContext, setGLContext, initShaderProgram, loadShader, loadTexture, loadMesh, makeGenericTexture, makeFramebuffer, makeDepthTexture, BoxMesh, PlaneMesh, SphereMesh, SpotLight, quat, mat4, vec3 };
