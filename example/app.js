@@ -17,27 +17,30 @@ const keys = {};
 
 can.width = gl.canvas.clientWidth;
 can.height = gl.canvas.clientHeight;
-setGLContext(gl);
 
-const scene = new Scene();
-const camera = new Camera(
-  'view cam',
-  45,
-  gl.canvas.width / gl.canvas.height,
-  1.0, 100.0,
-  { x: 0, y: 0, w: gl.canvas.width, h: gl.canvas.height }
-);
+var scene, camera, shapePivot;
 
-const spot = new SpotLight('spot', 15);
-vec3.set(spot.translation, 0, 5, -5);
-vec3.set(spot.direction, 0, -1, 0);
-
-const shapePivot = new Model('pivot', null, scene, null, null);
-vec3.set(shapePivot.translation, 0, 0, -5);
-
+setGLContext(gl); // must happen before anything
 init();
 
 async function init() {
+
+  scene = new Scene();
+  camera = new Camera(
+    'view cam',
+    45,
+    gl.canvas.width / gl.canvas.height,
+    1.0, 100.0,
+    { x: 0, y: 0, w: gl.canvas.width, h: gl.canvas.height }
+  );
+
+  const spot = new SpotLight('spot', 15);
+  vec3.set(spot.translation, 0, 5, -5);
+  vec3.set(spot.direction, 0, -1, 0);
+
+  shapePivot = new Model('pivot', null, scene, null, null);
+  vec3.set(shapePivot.translation, 0, 0, -5);
+
   const loaded = await Promise.all([
     loadTexture('./escher.jpg'),
     loadMesh('./bunny.obj')
