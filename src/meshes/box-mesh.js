@@ -1,4 +1,4 @@
-import Mesh from '../core/mesh';
+import Mesh from '../core/mesh.js';
 
 export default function BoxMesh (gl, w, h, d) {
   let mesh = new Mesh(gl);

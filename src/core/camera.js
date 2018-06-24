@@ -1,5 +1,5 @@
-import {quat, mat4, vec3} from '../node_modules/gl-matrix/src/gl-matrix';
-import {viewMatrix, projectionMatrix, matrixStack} from './matrix-stack';
+import {quat, mat4, vec3} from '../../node_modules/gl-matrix/src/gl-matrix.js';
+import {viewMatrix, projectionMatrix, matrixStack} from './matrix-stack.js';
 
 export default function Camera (gl, name, fov, aspect, near, far, viewport) {
   const cam = {
@@ -31,7 +31,7 @@ export default function Camera (gl, name, fov, aspect, near, far, viewport) {
       mat4.invert(viewMatrix, cam.matrix);
       mat4.perspective(projectionMatrix, cam.fov * Math.PI / 180, cam.aspect, cam.near, cam.far);
 
-      matrixStack = [];
+      matrixStack.length = 0;
       matrixStack.push(mat4.multiply(mat4.create(), viewMatrix, scene.matrix));
 
       for (let child of scene.children) {

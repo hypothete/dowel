@@ -1,4 +1,4 @@
-import Mesh from '../core/mesh';
+import Mesh from '../core/mesh.js';
 
 export default function PlaneMesh (gl, w, h, dw, dh) {
   let mesh = new Mesh(gl);
