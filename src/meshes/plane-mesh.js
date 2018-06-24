@@ -1,7 +1,7 @@
 import Mesh from '../core/mesh';
 
-export default function PlaneMesh (gl, w, h, dw, dh) {
-  let mesh = new Mesh(gl);
+export default function PlaneMesh (w, h, dw, dh) {
+  let mesh = new Mesh();
 
   let qw = w / dw; //quad width
   let qh = h / dh;

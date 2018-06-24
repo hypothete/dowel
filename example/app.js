@@ -4,6 +4,7 @@ import {
   Scene,
   loadMesh,
   loadTexture,
+  setGLContext,
   SpotLight,
   vec3
 } from '../dist/dowel.js';
@@ -16,10 +17,10 @@ const keys = {};
 
 can.width = gl.canvas.clientWidth;
 can.height = gl.canvas.clientHeight;
+setGLContext(gl);
 
 const scene = new Scene();
 const camera = new Camera(
-  gl,
   'view cam',
   45,
   gl.canvas.width / gl.canvas.height,
@@ -27,26 +28,26 @@ const camera = new Camera(
   { x: 0, y: 0, w: gl.canvas.width, h: gl.canvas.height }
 );
 
-const spot = new SpotLight(gl, 'spot', 15);
+const spot = new SpotLight('spot', 15);
 vec3.set(spot.translation, 0, 5, -5);
 vec3.set(spot.direction, 0, -1, 0);
 
-const shapePivot = new Model(gl, 'pivot', null, scene, null, null);
+const shapePivot = new Model('pivot', null, scene, null, null);
 vec3.set(shapePivot.translation, 0, 0, -5);
 
 init();
 
 async function init() {
   const loaded = await Promise.all([
-    loadTexture(gl, './escher.jpg'),
-    loadMesh(gl, './bunny.obj')
+    loadTexture('./escher.jpg'),
+    loadMesh('./bunny.obj')
   ]);
 
   const lizardTex = loaded[0];
   const bunnyMesh = loaded[1];
 
-  const bunnyShader = new PhongBlinnShader(gl);
-  const bunny = new Model(gl, 'bunny', bunnyMesh, shapePivot, bunnyShader);
+  const bunnyShader = new PhongBlinnShader();
+  const bunny = new Model('bunny', bunnyMesh, shapePivot, bunnyShader);
   bunny.textures.push(lizardTex);
   bunnyShader.updateSpot(spot);
 

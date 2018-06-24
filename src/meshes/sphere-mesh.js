@@ -1,7 +1,7 @@
 import Mesh from '../core/mesh';
 
-export default function SphereMesh (gl, r, dr, dh) {
-  let mesh = new Mesh(gl);
+export default function SphereMesh (r, dr, dh) {
+  let mesh = new Mesh();
 
   let dn = 0;
   for (let j = 0; j < dh + 1; j++) {

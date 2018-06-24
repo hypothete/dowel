@@ -1,7 +1,9 @@
 import {quat, mat4, vec3} from '../../node_modules/gl-matrix/src/gl-matrix';
 import {projectionMatrix, matrixStack} from './matrix-stack';
+import {getGLContext} from './gl-context';
 
-export default function Model (gl, name, mesh, parent, shader) {
+export default function Model (name, mesh, parent, shader) {
+  const gl = getGLContext();
   const model = {
     name,
     mesh,

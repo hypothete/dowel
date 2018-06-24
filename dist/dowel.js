@@ -8,7 +8,8 @@ function setGLContext(context) {
   gl = context;
 }
 
-function Mesh (gl, objMesh) {
+function Mesh (objMesh) {
+  const gl = getGLContext();
   let indices = objMesh ? objMesh.indices : [];
   let vertices = objMesh ? objMesh.vertices : [];
   let textures = objMesh ? objMesh.textures : [];
@@ -3631,7 +3632,8 @@ const matrixStack = [];
 const viewMatrix = create$3();
 const projectionMatrix = create$3();
 
-function Model (gl, name, mesh, parent, shader) {
+function Model (name, mesh, parent, shader) {
+  const gl = getGLContext();
   const model = {
     name,
     mesh,
@@ -3713,7 +3715,8 @@ function Scene () {
   return scene;
 }
 
-function Camera (gl, name, fov, aspect, near, far, viewport) {
+function Camera (name, fov, aspect, near, far, viewport) {
+  const gl = getGLContext();
   const cam = {
     name,
     fov,
@@ -3758,7 +3761,8 @@ function Camera (gl, name, fov, aspect, near, far, viewport) {
   return cam;
 }
 
-function Quad (gl, name, shader) {
+function Quad (name, shader) {
+  const gl = getGLContext();
   const quad = {
     name,
     mesh: {
@@ -3830,9 +3834,10 @@ function Quad (gl, name, shader) {
   return quad;
 }
 
-function initShaderProgram(gl, vsSource, fsSource) {
-  const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
-  const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
+function initShaderProgram(vsSource, fsSource) {
+  const gl = getGLContext();
+  const vertexShader = loadShader(gl.VERTEX_SHADER, vsSource);
+  const fragmentShader = loadShader(gl.FRAGMENT_SHADER, fsSource);
 
   // Create the shader program
 
@@ -3849,7 +3854,8 @@ function initShaderProgram(gl, vsSource, fsSource) {
   return shaderProgram;
 }
 
-function loadShader(gl, type, source) {
+function loadShader(type, source) {
+  const gl = getGLContext();
   const shader = gl.createShader(type);
   gl.shaderSource(shader, source);
   gl.compileShader(shader);
@@ -3863,15 +3869,16 @@ function loadShader(gl, type, source) {
   return shader;
 }
 
-function Shader(gl, vert, frag) {
-  this.shaderProgram = initShaderProgram(gl, vert, frag);
+function Shader(vert, frag) {
+  this.shaderProgram = initShaderProgram(vert, frag);
   this.shaderLocations = {
     attribLocations: {},
     uniformLocations: {}
   };
 }
 
-function loadTexture (gl, url) {
+function loadTexture (url) {
+  const gl = getGLContext();
   return new Promise(function (resolve) {
     const texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -3894,7 +3901,8 @@ function loadTexture (gl, url) {
   });
 }
 
-function makeGenericTexture (gl) {
+function makeGenericTexture () {
+  const gl = getGLContext();
   const texture = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -3904,7 +3912,8 @@ function makeGenericTexture (gl) {
   return texture;
 }
 
-function makeFramebuffer (gl) {
+function makeFramebuffer () {
+  const gl = getGLContext();
   // prep texture for drawing
   const texture = makeGenericTexture(gl);
   gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -3919,7 +3928,8 @@ function makeFramebuffer (gl) {
   return { buffer: fbo, texture };
 }
 
-function makeDepthTexture (gl, size) {
+function makeDepthTexture (size) {
+  const gl = getGLContext();
   const texture = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.texImage2D(
@@ -4932,15 +4942,15 @@ class Mesh$1 {
  * The Material class.
  */
 
-async function loadMesh (gl, url) {
+async function loadMesh (url) {
   const objRequest = new Request(url);
   const objResponse = await fetch(objRequest);
   const objData = await objResponse.text();
-  return new Mesh(gl, new Mesh$1(objData));
+  return new Mesh(new Mesh$1(objData));
 }
 
-function BoxMesh (gl, w, h, d) {
-  let mesh = new Mesh(gl);
+function BoxMesh (w, h, d) {
+  let mesh = new Mesh();
 
   let wl = w / 2;
   let hl = h / 2;
@@ -5032,8 +5042,8 @@ function BoxMesh (gl, w, h, d) {
   return mesh;
 }
 
-function PlaneMesh (gl, w, h, dw, dh) {
-  let mesh = new Mesh(gl);
+function PlaneMesh (w, h, dw, dh) {
+  let mesh = new Mesh();
 
   let qw = w / dw; //quad width
   let qh = h / dh;
@@ -5065,8 +5075,8 @@ function PlaneMesh (gl, w, h, dw, dh) {
   return mesh;
 }
 
-function SphereMesh (gl, r, dr, dh) {
-  let mesh = new Mesh(gl);
+function SphereMesh (r, dr, dh) {
+  let mesh = new Mesh();
 
   let dn = 0;
   for (let j = 0; j < dh + 1; j++) {
@@ -5095,7 +5105,8 @@ function SphereMesh (gl, r, dr, dh) {
   return mesh;
 }
 
-function SpotLight(gl, name, angle$$1) {
+function SpotLight(name, angle$$1) {
+  const gl = getGLContext();
   const spot = {
     translation: create$4(),
     direction: create$4(),

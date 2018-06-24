@@ -1,4 +1,7 @@
-export default function Quad (gl, name, shader) {
+import {getGLContext} from './gl-context';
+
+export default function Quad (name, shader) {
+  const gl = getGLContext();
   const quad = {
     name,
     mesh: {

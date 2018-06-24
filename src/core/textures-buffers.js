@@ -1,4 +1,7 @@
-export function loadTexture (gl, url) {
+import {getGLContext} from './gl-context';
+
+export function loadTexture (url) {
+  const gl = getGLContext();
   return new Promise(function (resolve) {
     const texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -21,7 +24,8 @@ export function loadTexture (gl, url) {
   });
 }
 
-export function makeGenericTexture (gl) {
+export function makeGenericTexture () {
+  const gl = getGLContext();
   const texture = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -31,7 +35,8 @@ export function makeGenericTexture (gl) {
   return texture;
 }
 
-export function makeFramebuffer (gl) {
+export function makeFramebuffer () {
+  const gl = getGLContext();
   // prep texture for drawing
   const texture = makeGenericTexture(gl);
   gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -46,7 +51,8 @@ export function makeFramebuffer (gl) {
   return { buffer: fbo, texture };
 }
 
-export function makeDepthTexture (gl, size) {
+export function makeDepthTexture (size) {
+  const gl = getGLContext();
   const texture = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.texImage2D(

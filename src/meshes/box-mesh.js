@@ -1,7 +1,7 @@
 import Mesh from '../core/mesh';
 
-export default function BoxMesh (gl, w, h, d) {
-  let mesh = new Mesh(gl);
+export default function BoxMesh (w, h, d) {
+  let mesh = new Mesh();
 
   let wl = w / 2;
   let hl = h / 2;

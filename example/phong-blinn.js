@@ -1,6 +1,7 @@
-import {Shader} from '../dist/dowel.js';
+import {Shader, getGLContext} from '../dist/dowel.js';
 
-export default function PhongBlinnShader(gl) {
+export default function PhongBlinnShader() {
+  const gl = getGLContext();
 
   const vert = `#version 300 es
       uniform mat4 uModelViewMatrix;
@@ -64,7 +65,7 @@ export default function PhongBlinnShader(gl) {
       }
     `;
 
-  const shader = new Shader(gl, vert, frag);
+  const shader = new Shader(vert, frag);
 
   shader.shaderLocations = {
     attribLocations: {

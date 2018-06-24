@@ -1,8 +1,10 @@
 import {vec3} from '../../node_modules/gl-matrix/src/gl-matrix';
 import {makeDepthTexture} from '../core/textures-buffers';
 import Camera from '../core/camera';
+import {getGLContext} from '../core/gl-context';
 
-export default function SpotLight(gl, name, angle) {
+export default function SpotLight(name, angle) {
+  const gl = getGLContext();
   const spot = {
     translation: vec3.create(),
     direction: vec3.create(),

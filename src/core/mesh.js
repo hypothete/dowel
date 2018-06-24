@@ -1,4 +1,7 @@
-export default function Mesh (gl, objMesh) {
+import {getGLContext} from './gl-context';
+
+export default function Mesh (objMesh) {
+  const gl = getGLContext();
   let indices = objMesh ? objMesh.indices : [];
   let vertices = objMesh ? objMesh.vertices : [];
   let textures = objMesh ? objMesh.textures : [];
