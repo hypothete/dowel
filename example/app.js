@@ -8,7 +8,8 @@ import {
   SpotLight,
   vec3,
   PlaneMesh,
-  SphereMesh
+  SphereMesh,
+  BoxMesh
 } from '../dist/dowel.js';
 
 import PhongBlinnShader from './phong-blinn.js';
@@ -68,6 +69,12 @@ async function init() {
   const sphere = new Model('sphere', sphereMesh, shapePivot, bunnyShader);
   sphere.textures.push(lizardTex);
   vec3.set(sphere.translation, 1.5, 0.15, -2);
+
+  const boxMesh = new BoxMesh(0.5, 1, 0.5);
+  const box = new Model('box', boxMesh, shapePivot, bunnyShader);
+  box.textures.push(lizardTex);
+  vec3.set(box.translation, -1.5, 0.15, 0.75);
+  vec3.set(box.rotation, 0, 22.5, 0);
 
   gl.enable(gl.CULL_FACE);
   gl.enable(gl.DEPTH_TEST);
