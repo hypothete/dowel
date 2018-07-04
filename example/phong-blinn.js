@@ -51,7 +51,7 @@ export default function PhongBlinnShader() {
 
         float lambertian = max(dot(dirToSpot,normal), 0.0);
         float specular = 0.0;
-        float shininess = 100.0;
+        float shininess = 10.0;
         float ambient = 0.2;
 
         if (lambertian > 0.0 && dot(-uSpotDir, dirToSpot) >= uSpotLimit) {

@@ -21,7 +21,7 @@ const keys = {};
 can.width = gl.canvas.clientWidth;
 can.height = gl.canvas.clientHeight;
 
-var scene, camera, shapePivot;
+var scene, camera, shapePivot, spot, bunnyShader;
 
 setGLContext(gl); // must happen before anything
 init();
@@ -39,7 +39,7 @@ async function init() {
   vec3.set(camera.translation, 0, 1, 0);
   vec3.set(camera.rotation, -10, 0, 0);
 
-  const spot = new SpotLight('spot', 15);
+  spot = new SpotLight('spot', 0.5);
   vec3.set(spot.translation, 0, 5, -3);
   vec3.set(spot.direction, 0, -1, 0);
 
@@ -54,7 +54,7 @@ async function init() {
   const lizardTex = loaded[0];
   const bunnyMesh = loaded[1];
 
-  const bunnyShader = new PhongBlinnShader();
+  bunnyShader = new PhongBlinnShader();
   const bunny = new Model('bunny', bunnyMesh, shapePivot, bunnyShader);
   bunny.textures.push(lizardTex);
   bunnyShader.updateSpot(spot);
@@ -81,11 +81,14 @@ async function init() {
   scene.updateMatrix();
   enableControls();
   console.log('loaded');
-  animate();
+  animate(0);
 }
 
-function animate() {
+function animate(ts) {
   requestAnimationFrame(animate);
+  ts = ts / 1000;
+  vec3.set(spot.direction, 0.25 * Math.sin(ts), -0.5 - 0.25 * Math.cos(ts / 2), -1);
+  bunnyShader.updateSpot(spot);
 
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
