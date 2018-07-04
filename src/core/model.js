@@ -1,5 +1,5 @@
-import {quat, mat4, vec3} from '../../node_modules/gl-matrix/src/gl-matrix';
-import {projectionMatrix, matrixStack} from './matrix-stack';
+import {quat, mat4, vec3, mat3} from '../../node_modules/gl-matrix/src/gl-matrix';
+import {projectionMatrix, normalMatrix, matrixStack} from './matrix-stack';
 import {getGLContext} from './gl-context';
 
 export default function Model (name, mesh, parent, shader) {
@@ -43,6 +43,11 @@ export default function Model (name, mesh, parent, shader) {
 
       gl.uniformMatrix4fv(model.shader.shaderLocations.uniformLocations.projectionMatrix, false, projectionMatrix);
       gl.uniformMatrix4fv(model.shader.shaderLocations.uniformLocations.modelViewMatrix, false, worldMVMatrix);
+
+      if (typeof model.shader.shaderLocations.uniformLocations.normalMatrix !== 'undefined') {
+        mat3.normalFromMat4(normalMatrix, worldMVMatrix);
+        gl.uniformMatrix3fv(model.shader.shaderLocations.uniformLocations.normalMatrix, false, normalMatrix);
+      }
 
       for (let texInd = 0; texInd < model.textures.length; texInd++) {
         let glSlot = 'TEXTURE' + texInd;

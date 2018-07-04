@@ -10,18 +10,16 @@ function setGLContext(context) {
 
 function Mesh (objMesh) {
   const gl = getGLContext();
-  let indices = objMesh ? objMesh.indices : [];
-  let vertices = objMesh ? objMesh.vertices : [];
-  let textures = objMesh ? objMesh.textures : [];
-
   let mesh = {
     vao: gl.createVertexArray(),
     vertexBuffer: gl.createBuffer(),
     textureBuffer: gl.createBuffer(),
     indexBuffer: gl.createBuffer(),
-    indices,
-    vertices,
-    textures,
+    normalBuffer: gl.createBuffer(),
+    indices: objMesh ? objMesh.indices : [],
+    vertices: objMesh ? objMesh.vertices : [],
+    textures: objMesh ? objMesh.textures : [],  // texture coords
+    normals: objMesh ? objMesh.vertexNormals : [], // vertex normals
     updateVertices(shaderLocations) {
       gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vertexBuffer);
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.vertices), gl.STATIC_DRAW);
@@ -44,11 +42,20 @@ function Mesh (objMesh) {
       mesh.indexBuffer.itemSize = 1;
       mesh.indexBuffer.numItems = mesh.indices.length / mesh.indexBuffer.itemSize;
     },
+    updateNormals(shaderLocations) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, mesh.normalBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.normals), gl.STATIC_DRAW);
+      mesh.normalBuffer.itemSize = 3;
+      mesh.normalBuffer.numItems = mesh.normals.length / mesh.normalBuffer.itemSize;
+      gl.enableVertexAttribArray(shaderLocations.attribLocations.vertexNormal);
+      gl.vertexAttribPointer(shaderLocations.attribLocations.vertexNormal, mesh.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    },
     initializeBuffers (shaderLocations) {
       gl.bindVertexArray(mesh.vao);
       mesh.updateVertices(shaderLocations);
       mesh.updateTextures(shaderLocations);
       mesh.updateIndices(shaderLocations);
+      mesh.updateNormals(shaderLocations);
       gl.bindVertexArray(null);
     }
   };
@@ -89,6 +96,56 @@ function create$2() {
   out[6] = 0;
   out[7] = 0;
   out[8] = 1;
+  return out;
+}
+
+/**
+* Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix
+*
+* @param {mat3} out mat3 receiving operation result
+* @param {mat4} a Mat4 to derive the normal matrix from
+*
+* @returns {mat3} out
+*/
+function normalFromMat4(out, a) {
+  let a00 = a[0], a01 = a[1], a02 = a[2], a03 = a[3];
+  let a10 = a[4], a11 = a[5], a12 = a[6], a13 = a[7];
+  let a20 = a[8], a21 = a[9], a22 = a[10], a23 = a[11];
+  let a30 = a[12], a31 = a[13], a32 = a[14], a33 = a[15];
+
+  let b00 = a00 * a11 - a01 * a10;
+  let b01 = a00 * a12 - a02 * a10;
+  let b02 = a00 * a13 - a03 * a10;
+  let b03 = a01 * a12 - a02 * a11;
+  let b04 = a01 * a13 - a03 * a11;
+  let b05 = a02 * a13 - a03 * a12;
+  let b06 = a20 * a31 - a21 * a30;
+  let b07 = a20 * a32 - a22 * a30;
+  let b08 = a20 * a33 - a23 * a30;
+  let b09 = a21 * a32 - a22 * a31;
+  let b10 = a21 * a33 - a23 * a31;
+  let b11 = a22 * a33 - a23 * a32;
+
+  // Calculate the determinant
+  let det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
+
+  if (!det) {
+    return null;
+  }
+  det = 1.0 / det;
+
+  out[0] = (a11 * b11 - a12 * b10 + a13 * b09) * det;
+  out[1] = (a12 * b08 - a10 * b11 - a13 * b07) * det;
+  out[2] = (a10 * b10 - a11 * b08 + a13 * b06) * det;
+
+  out[3] = (a02 * b10 - a01 * b11 - a03 * b09) * det;
+  out[4] = (a00 * b11 - a02 * b08 + a03 * b07) * det;
+  out[5] = (a01 * b08 - a00 * b10 - a03 * b06) * det;
+
+  out[6] = (a31 * b05 - a32 * b04 + a33 * b03) * det;
+  out[7] = (a32 * b02 - a30 * b05 - a33 * b01) * det;
+  out[8] = (a30 * b04 - a31 * b02 + a33 * b00) * det;
+
   return out;
 }
 
@@ -3631,6 +3688,7 @@ const forEach$2 = (function() {
 const matrixStack = [];
 const viewMatrix = create$3();
 const projectionMatrix = create$3();
+const normalMatrix = create$2();
 
 function Model (name, mesh, parent, shader) {
   const gl = getGLContext();
@@ -3673,6 +3731,11 @@ function Model (name, mesh, parent, shader) {
 
       gl.uniformMatrix4fv(model.shader.shaderLocations.uniformLocations.projectionMatrix, false, projectionMatrix);
       gl.uniformMatrix4fv(model.shader.shaderLocations.uniformLocations.modelViewMatrix, false, worldMVMatrix);
+
+      if (typeof model.shader.shaderLocations.uniformLocations.normalMatrix !== 'undefined') {
+        normalFromMat4(normalMatrix, worldMVMatrix);
+        gl.uniformMatrix3fv(model.shader.shaderLocations.uniformLocations.normalMatrix, false, normalMatrix);
+      }
 
       for (let texInd = 0; texInd < model.textures.length; texInd++) {
         let glSlot = 'TEXTURE' + texInd;
@@ -5019,6 +5082,7 @@ function BoxMesh (w, h, d) {
     0.5, 0.75,
     0.75, 0.75
   ];
+  
   mesh.indices = [
     2, 0, 1,
     2, 3, 0,
@@ -5037,6 +5101,38 @@ function BoxMesh (w, h, d) {
 
     21, 20, 22,
     20, 23, 22
+  ];
+
+  mesh.normals = [
+    0, -1, 0,
+    0, -1, 0,
+    0, -1, 0,
+    0, -1, 0,
+
+    0, 1, 0,
+    0, 1, 0,
+    0, 1, 0,
+    0, 1, 0,
+
+    1, 0, 0,
+    1, 0, 0,
+    1, 0, 0,
+    1, 0, 0,
+
+    0, 0, 1,
+    0, 0, 1,
+    0, 0, 1,
+    0, 0, 1,
+
+    -1, 0, 0,
+    -1, 0, 0,
+    -1, 0, 0,
+    -1, 0, 0,
+
+    0, 0, -1,
+    0, 0, -1,
+    0, 0, -1,
+    0, 0, -1,
   ];
 
   return mesh;
@@ -5058,7 +5154,7 @@ function PlaneMesh (w, h, dw, dh) {
       let dy = j * qh - hh;
       mesh.vertices.push(dx, dy, 0.0);
       mesh.textures.push(i / dw, j / dh);
-
+      mesh.normals.push(0.0, 0.0, 1.0);
       if (j < dh) {
         if (i < dw) {
           mesh.indices.push(dn, dn + 1, dn + (dw + 1));
@@ -5081,14 +5177,17 @@ function SphereMesh (r, dr, dh) {
   let dn = 0;
   for (let j = 0; j < dh + 1; j++) {
     for (let i = 0; i < dr + 1; i++) {
-      let angle = -2 * Math.PI * i / dr;
+      let angle$$1 = -2 * Math.PI * i / dr;
       let dy = -Math.cos(Math.PI * j / dh) * r;
       let rr = Math.sin(Math.PI * j / dh) * r;
-      let dx = Math.cos(angle) * rr;
-      let dz = Math.sin(angle) * rr;
+      let dx = Math.cos(angle$$1) * rr;
+      let dz = Math.sin(angle$$1) * rr;
 
       mesh.vertices.push(dx, dy, dz);
       mesh.textures.push(i / dr, j / dh);
+
+      let vNorm = normalize(create$4(), fromValues$4(dx, dy, dz));
+      mesh.normals.push(vNorm[0], vNorm[1], vNorm[2]);
 
       if (j < dh) {
         if (i < dr) {

@@ -2,18 +2,16 @@ import {getGLContext} from './gl-context';
 
 export default function Mesh (objMesh) {
   const gl = getGLContext();
-  let indices = objMesh ? objMesh.indices : [];
-  let vertices = objMesh ? objMesh.vertices : [];
-  let textures = objMesh ? objMesh.textures : [];
-
   let mesh = {
     vao: gl.createVertexArray(),
     vertexBuffer: gl.createBuffer(),
     textureBuffer: gl.createBuffer(),
     indexBuffer: gl.createBuffer(),
-    indices,
-    vertices,
-    textures,
+    normalBuffer: gl.createBuffer(),
+    indices: objMesh ? objMesh.indices : [],
+    vertices: objMesh ? objMesh.vertices : [],
+    textures: objMesh ? objMesh.textures : [],  // texture coords
+    normals: objMesh ? objMesh.vertexNormals : [], // vertex normals
     updateVertices(shaderLocations) {
       gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vertexBuffer);
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.vertices), gl.STATIC_DRAW);
@@ -36,11 +34,20 @@ export default function Mesh (objMesh) {
       mesh.indexBuffer.itemSize = 1;
       mesh.indexBuffer.numItems = mesh.indices.length / mesh.indexBuffer.itemSize;
     },
+    updateNormals(shaderLocations) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, mesh.normalBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.normals), gl.STATIC_DRAW);
+      mesh.normalBuffer.itemSize = 3;
+      mesh.normalBuffer.numItems = mesh.normals.length / mesh.normalBuffer.itemSize;
+      gl.enableVertexAttribArray(shaderLocations.attribLocations.vertexNormal);
+      gl.vertexAttribPointer(shaderLocations.attribLocations.vertexNormal, mesh.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    },
     initializeBuffers (shaderLocations) {
       gl.bindVertexArray(mesh.vao);
       mesh.updateVertices(shaderLocations);
       mesh.updateTextures(shaderLocations);
       mesh.updateIndices(shaderLocations);
+      mesh.updateNormals(shaderLocations);
       gl.bindVertexArray(null);
     }
   };

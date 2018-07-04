@@ -6,12 +6,15 @@ export default function PhongBlinnShader() {
   const vert = `#version 300 es
       uniform mat4 uModelViewMatrix;
       uniform mat4 uProjectionMatrix;
+      uniform mat3 uNormalMatrix;
 
       in vec4 aVertexPosition;
       in vec2 aTextureCoord;
+      in vec3 aVertexNormal;
 
       out vec2 vTextureCoord;
       out vec3 vVertPos;
+      out vec3 vNormal;
 
       void main() {
         vTextureCoord = aTextureCoord;
@@ -19,6 +22,7 @@ export default function PhongBlinnShader() {
 
         // make normals
         vVertPos = vec4(uModelViewMatrix * aVertexPosition).xyz;
+        vNormal = normalize(uNormalMatrix * aVertexNormal);
       }
     `;
 
@@ -32,6 +36,7 @@ export default function PhongBlinnShader() {
 
       in vec2 vTextureCoord;
       in vec3 vVertPos;
+      in vec3 vNormal;
       
       out vec4 fragColor;
 
@@ -39,14 +44,14 @@ export default function PhongBlinnShader() {
         vec3 diffuse = texture(uSpotMap, vTextureCoord).rgb;
         vec3 specColor = vec3(1.0);
 
-        vec3 fdx = vec3(dFdx(vVertPos.x),dFdx(vVertPos.y),dFdx(vVertPos.z));
-        vec3 fdy = vec3(dFdy(vVertPos.x),dFdy(vVertPos.y),dFdy(vVertPos.z));
-        vec3 normal = normalize(cross(fdx, fdy));
+        // vec3 fdx = vec3(dFdx(vVertPos.x),dFdx(vVertPos.y),dFdx(vVertPos.z));
+        // vec3 fdy = vec3(dFdy(vVertPos.x),dFdy(vVertPos.y),dFdy(vVertPos.z));
+        vec3 normal = vNormal; // normalize(cross(fdx, fdy));
         vec3 dirToSpot = normalize(uSpotPos - vVertPos);
 
         float lambertian = max(dot(dirToSpot,normal), 0.0);
         float specular = 0.0;
-        float shininess = 1.0;
+        float shininess = 100.0;
         float ambient = 0.2;
 
         if (lambertian > 0.0 && dot(-uSpotDir, dirToSpot) >= uSpotLimit) {
@@ -71,10 +76,12 @@ export default function PhongBlinnShader() {
     attribLocations: {
       vertexPosition: gl.getAttribLocation(shader.shaderProgram, 'aVertexPosition'),
       textureCoord: gl.getAttribLocation(shader.shaderProgram, 'aTextureCoord'),
+      vertexNormal: gl.getAttribLocation(shader.shaderProgram, 'aVertexNormal'),
     },
     uniformLocations: {
       projectionMatrix: gl.getUniformLocation(shader.shaderProgram, 'uProjectionMatrix'),
       modelViewMatrix: gl.getUniformLocation(shader.shaderProgram, 'uModelViewMatrix'),
+      normalMatrix: gl.getUniformLocation(shader.shaderProgram, 'uNormalMatrix'),
       texture0: gl.getUniformLocation(shader.shaderProgram, 'uSpotMap'),
       spotPos: gl.getUniformLocation(shader.shaderProgram, 'uSpotPos'),
       spotDir: gl.getUniformLocation(shader.shaderProgram, 'uSpotDir'),

@@ -16,7 +16,7 @@ export default function PlaneMesh (w, h, dw, dh) {
       let dy = j * qh - hh;
       mesh.vertices.push(dx, dy, 0.0);
       mesh.textures.push(i / dw, j / dh);
-
+      mesh.normals.push(0.0, 0.0, 1.0);
       if (j < dh) {
         if (i < dw) {
           mesh.indices.push(dn, dn + 1, dn + (dw + 1));

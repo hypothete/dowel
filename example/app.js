@@ -6,7 +6,9 @@ import {
   loadTexture,
   setGLContext,
   SpotLight,
-  vec3
+  vec3,
+  PlaneMesh,
+  SphereMesh
 } from '../dist/dowel.js';
 
 import PhongBlinnShader from './phong-blinn.js';
@@ -33,13 +35,15 @@ async function init() {
     1.0, 100.0,
     { x: 0, y: 0, w: gl.canvas.width, h: gl.canvas.height }
   );
+  vec3.set(camera.translation, 0, 1, 0);
+  vec3.set(camera.rotation, -10, 0, 0);
 
   const spot = new SpotLight('spot', 15);
-  vec3.set(spot.translation, 0, 5, -5);
+  vec3.set(spot.translation, 0, 5, -3);
   vec3.set(spot.direction, 0, -1, 0);
 
   shapePivot = new Model('pivot', null, scene, null, null);
-  vec3.set(shapePivot.translation, 0, 0, -5);
+  vec3.set(shapePivot.translation, 0, 0, -3);
 
   const loaded = await Promise.all([
     loadTexture('./escher.jpg'),
@@ -53,6 +57,17 @@ async function init() {
   const bunny = new Model('bunny', bunnyMesh, shapePivot, bunnyShader);
   bunny.textures.push(lizardTex);
   bunnyShader.updateSpot(spot);
+
+  const planeMesh = new PlaneMesh(5, 5, 5, 5);
+  const plane = new Model('plane', planeMesh, shapePivot, bunnyShader);
+  plane.textures.push(lizardTex);
+  vec3.set(plane.translation, 0, -0.35, 0);
+  vec3.set(plane.rotation, -90, 0, 0);
+
+  const sphereMesh = new SphereMesh(0.5, 32, 32);
+  const sphere = new Model('sphere', sphereMesh, shapePivot, bunnyShader);
+  sphere.textures.push(lizardTex);
+  vec3.set(sphere.translation, 1.5, 0.15, -2);
 
   gl.enable(gl.CULL_FACE);
   gl.enable(gl.DEPTH_TEST);

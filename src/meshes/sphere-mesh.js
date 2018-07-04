@@ -1,4 +1,5 @@
 import Mesh from '../core/mesh';
+import {vec3} from '../../node_modules/gl-matrix/src/gl-matrix';
 
 export default function SphereMesh (r, dr, dh) {
   let mesh = new Mesh();
@@ -14,6 +15,9 @@ export default function SphereMesh (r, dr, dh) {
 
       mesh.vertices.push(dx, dy, dz);
       mesh.textures.push(i / dr, j / dh);
+
+      let vNorm = vec3.normalize(vec3.create(), vec3.fromValues(dx, dy, dz));
+      mesh.normals.push(vNorm[0], vNorm[1], vNorm[2]);
 
       if (j < dh) {
         if (i < dr) {
