@@ -1,5 +1,7 @@
 # dowel
 
+![a picture rendered by dowel](example.png)
+
 A toy library for learning WebGL2 concepts
 
 ## Installation and use
