@@ -10,7 +10,7 @@ import {
   PlaneMesh,
   SphereMesh,
   BoxMesh
-} from '../dist/dowel.js';
+} from '../../dist/dowel.js';
 
 import PhongBlinnShader from './phong-blinn.js';
 

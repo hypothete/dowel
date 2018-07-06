@@ -3713,9 +3713,9 @@ function Model (name, mesh, parent, shader) {
     },
     draw: function () {
       model.updateMatrix();
-      let parentMVMatrix = matrixStack[matrixStack.length - 1];
-      let worldMVMatrix = multiply$3(create$3(), parentMVMatrix, model.matrix);
-      matrixStack.push(worldMVMatrix);
+      let parentModelMatrix = matrixStack[matrixStack.length - 1];
+      let modelMatrix = multiply$3(create$3(), parentModelMatrix, model.matrix);
+      matrixStack.push(modelMatrix);
 
       for (let child of model.children) {
         child.draw();
@@ -3730,10 +3730,11 @@ function Model (name, mesh, parent, shader) {
       gl.useProgram(model.shader.shaderProgram);
 
       gl.uniformMatrix4fv(model.shader.shaderLocations.uniformLocations.projectionMatrix, false, projectionMatrix);
-      gl.uniformMatrix4fv(model.shader.shaderLocations.uniformLocations.modelViewMatrix, false, worldMVMatrix);
+      gl.uniformMatrix4fv(model.shader.shaderLocations.uniformLocations.modelMatrix, false, modelMatrix);
+      gl.uniformMatrix4fv(model.shader.shaderLocations.uniformLocations.viewMatrix, false, viewMatrix);
 
       if (typeof model.shader.shaderLocations.uniformLocations.normalMatrix !== 'undefined') {
-        normalFromMat4(normalMatrix, worldMVMatrix);
+        normalFromMat4(normalMatrix, modelMatrix);
         gl.uniformMatrix3fv(model.shader.shaderLocations.uniformLocations.normalMatrix, false, normalMatrix);
       }
 
@@ -3810,7 +3811,7 @@ function Camera (name, fov, aspect, near, far, viewport) {
       perspective(projectionMatrix, cam.fov * Math.PI / 180, cam.aspect, cam.near, cam.far);
 
       matrixStack.length = 0;
-      matrixStack.push(multiply$3(create$3(), viewMatrix, scene.matrix));
+      matrixStack.push(scene.matrix);
 
       for (let child of scene.children) {
         child.draw();

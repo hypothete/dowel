@@ -1,10 +1,11 @@
-import {Shader, getGLContext} from '../dist/dowel.js';
+import {Shader, getGLContext} from '../../dist/dowel.js';
 
 export default function PhongBlinnShader() {
   const gl = getGLContext();
 
   const vert = `#version 300 es
-      uniform mat4 uModelViewMatrix;
+      uniform mat4 uModelMatrix;
+      uniform mat4 uViewMatrix;
       uniform mat4 uProjectionMatrix;
       uniform mat3 uNormalMatrix;
 
@@ -18,10 +19,10 @@ export default function PhongBlinnShader() {
 
       void main() {
         vTextureCoord = aTextureCoord;
-        gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+        gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix * aVertexPosition;
 
         // make normals
-        vVertPos = vec4(uModelViewMatrix * aVertexPosition).xyz;
+        vVertPos = vec4(uModelMatrix * aVertexPosition).xyz;
         vNormal = normalize(uNormalMatrix * aVertexNormal);
       }
     `;
@@ -80,7 +81,8 @@ export default function PhongBlinnShader() {
     },
     uniformLocations: {
       projectionMatrix: gl.getUniformLocation(shader.shaderProgram, 'uProjectionMatrix'),
-      modelViewMatrix: gl.getUniformLocation(shader.shaderProgram, 'uModelViewMatrix'),
+      modelMatrix: gl.getUniformLocation(shader.shaderProgram, 'uModelMatrix'),
+      viewMatrix: gl.getUniformLocation(shader.shaderProgram, 'uViewMatrix'),
       normalMatrix: gl.getUniformLocation(shader.shaderProgram, 'uNormalMatrix'),
       texture0: gl.getUniformLocation(shader.shaderProgram, 'uSpotMap'),
       spotPos: gl.getUniformLocation(shader.shaderProgram, 'uSpotPos'),

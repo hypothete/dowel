@@ -34,7 +34,7 @@ export default function Camera (name, fov, aspect, near, far, viewport) {
       mat4.perspective(projectionMatrix, cam.fov * Math.PI / 180, cam.aspect, cam.near, cam.far);
 
       matrixStack.length = 0;
-      matrixStack.push(mat4.multiply(mat4.create(), viewMatrix, scene.matrix));
+      matrixStack.push(scene.matrix);
 
       for (let child of scene.children) {
         child.draw();

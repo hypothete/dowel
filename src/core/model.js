@@ -1,5 +1,5 @@
 import {quat, mat4, vec3, mat3} from '../../node_modules/gl-matrix/src/gl-matrix';
-import {projectionMatrix, normalMatrix, matrixStack} from './matrix-stack';
+import {projectionMatrix, normalMatrix, viewMatrix, matrixStack} from './matrix-stack';
 import {getGLContext} from './gl-context';
 
 export default function Model (name, mesh, parent, shader) {
@@ -25,9 +25,9 @@ export default function Model (name, mesh, parent, shader) {
     },
     draw: function () {
       model.updateMatrix();
-      let parentMVMatrix = matrixStack[matrixStack.length - 1];
-      let worldMVMatrix = mat4.multiply(mat4.create(), parentMVMatrix, model.matrix);
-      matrixStack.push(worldMVMatrix);
+      let parentModelMatrix = matrixStack[matrixStack.length - 1];
+      let modelMatrix = mat4.multiply(mat4.create(), parentModelMatrix, model.matrix);
+      matrixStack.push(modelMatrix);
 
       for (let child of model.children) {
         child.draw();
@@ -42,10 +42,11 @@ export default function Model (name, mesh, parent, shader) {
       gl.useProgram(model.shader.shaderProgram);
 
       gl.uniformMatrix4fv(model.shader.shaderLocations.uniformLocations.projectionMatrix, false, projectionMatrix);
-      gl.uniformMatrix4fv(model.shader.shaderLocations.uniformLocations.modelViewMatrix, false, worldMVMatrix);
+      gl.uniformMatrix4fv(model.shader.shaderLocations.uniformLocations.modelMatrix, false, modelMatrix);
+      gl.uniformMatrix4fv(model.shader.shaderLocations.uniformLocations.viewMatrix, false, viewMatrix);
 
       if (typeof model.shader.shaderLocations.uniformLocations.normalMatrix !== 'undefined') {
-        mat3.normalFromMat4(normalMatrix, worldMVMatrix);
+        mat3.normalFromMat4(normalMatrix, modelMatrix);
         gl.uniformMatrix3fv(model.shader.shaderLocations.uniformLocations.normalMatrix, false, normalMatrix);
       }
 
