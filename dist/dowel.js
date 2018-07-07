@@ -5237,6 +5237,15 @@ function SpotLight(name, angle$$1) {
   return spot;
 }
 
+function PointLight(name, intensity, color) {
+  const point = {
+    translation: create$4(),
+    intensity,
+    color,
+  };
+  return point;
+}
+
 // Core Imports
 
-export { Camera, Mesh, Model, Scene, Quad, Shader, getGLContext, setGLContext, initShaderProgram, loadShader, loadTexture, loadMesh, makeGenericTexture, makeFramebuffer, makeDepthTexture, BoxMesh, PlaneMesh, SphereMesh, SpotLight, quat, mat4, vec3 };
+export { Camera, Mesh, Model, Scene, Quad, Shader, getGLContext, setGLContext, initShaderProgram, loadShader, loadTexture, loadMesh, makeGenericTexture, makeFramebuffer, makeDepthTexture, BoxMesh, PlaneMesh, SphereMesh, SpotLight, PointLight, quat, mat4, vec3 };

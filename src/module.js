@@ -24,6 +24,7 @@ import SphereMesh from './meshes/sphere-mesh';
 
 // Lights
 import SpotLight from './lights/spot-light';
+import PointLight from './lights/point-light';
 
 // gl-matrix objects you'll need
 import {quat, mat4, vec3} from '../node_modules/gl-matrix/src/gl-matrix';
@@ -48,6 +49,7 @@ export {
   PlaneMesh,
   SphereMesh,
   SpotLight,
+  PointLight,
   quat,
   mat4,
   vec3

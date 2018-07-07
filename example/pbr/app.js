@@ -3,12 +3,13 @@ import {
   Model,
   Scene,
   setGLContext,
-  SpotLight,
+  PointLight,
   vec3,
-  SphereMesh
+  SphereMesh,
+  loadTexture
 } from '../../dist/dowel.js';
 
-import CookTorranceShader from './cooktorr.js';
+import PBRShader from './pbr.js';
 
 const can = document.querySelector('canvas');
 const gl = can.getContext('webgl2');
@@ -17,7 +18,7 @@ const keys = {};
 can.width = gl.canvas.clientWidth;
 can.height = gl.canvas.clientHeight;
 
-var scene, camera, shapePivot, spot, sphereShader;
+var scene, camera, shapePivot, point;
 
 setGLContext(gl); // must happen before anything
 init();
@@ -29,26 +30,40 @@ async function init() {
     'view cam',
     45,
     gl.canvas.width / gl.canvas.height,
-    1.0, 100.0,
+    0.1, 100.0,
     { x: 0, y: 0, w: gl.canvas.width, h: gl.canvas.height }
   );
   vec3.set(camera.translation, 0, 0, 0);
 
-  spot = new SpotLight('spot', 0.5);
-  vec3.set(spot.translation, 8, 5, 3);
-  vec3.set(spot.direction, -0.5, -1, -1);
+  point = new PointLight('point', 2, vec3.fromValues(1.0, 1.0, 1.0));
+  vec3.set(point.translation,3, 3, 3);
 
   shapePivot = new Model('pivot', null, scene, null, null);
   vec3.set(shapePivot.translation, 0, 0, -3);
 
-  // const loaded = await Promise.all([
-  // ]);
+  const loaded = await Promise.all([
+    loadTexture('./brdfLUT.png'),
+  ]);
 
-  sphereShader = new CookTorranceShader({ color: vec3.fromValues(0.9, 0.2, 0.2) });
-  sphereShader.updateSpot(spot);
-  const sphereMesh = new SphereMesh(0.5, 32, 32);
-  const sphere = new Model('sphere', sphereMesh, shapePivot, sphereShader);
-  console.log(sphere);
+  const sphereMesh = new SphereMesh(0.1, 64, 64);
+  const gridSize = 7;
+  const gridSpread = 2.0;
+  for (let i = 0; i < gridSize; i++) {
+    for (let j = 0; j < gridSize; j++) {
+      const sphereShader = new PBRShader();
+      sphereShader.setColor(vec3.fromValues(0.9, 0.2, 0.2));
+      sphereShader.setMetalness(i / (gridSize - 1));
+      sphereShader.setRoughness(1.0 - j / (gridSize - 1));
+      sphereShader.updatePoint(point);
+      sphereShader.updateCamera(camera);
+
+      const sphere = new Model(`sphere-${i}-${j}`, sphereMesh, shapePivot, sphereShader);
+      sphere.textures.push(loaded[0]);
+      const sx = gridSpread * (i / (gridSize - 1) - 0.5);
+      const sy = gridSpread * (j / (gridSize - 1) - 0.5);
+      vec3.set(sphere.translation, sx, sy, 0);
+    }
+  }
 
   gl.enable(gl.CULL_FACE);
   gl.enable(gl.DEPTH_TEST);
@@ -58,8 +73,14 @@ async function init() {
   animate(0);
 }
 
-function animate() {
+function animate(ts) {
   requestAnimationFrame(animate);
+
+  ts = ts / 1000;
+  vec3.set(point.translation, Math.cos(ts) * 10.0, 5.0, Math.sin(ts) * 10.0);
+  shapePivot.children.forEach(child => {
+    child.shader.updatePoint(point);
+  });
 
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
