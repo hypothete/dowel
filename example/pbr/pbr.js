@@ -55,6 +55,7 @@ export default function PBRShader() {
         float VdotH = dot(viewDir, halfDir);
         float NdotH = dot(vNormal, halfDir);
         vec2 brdf = texture(uTexture0, vec2(NdotV, uRoughness)).rg;
+        brdf = pow(brdf, vec2(2.2));
 
         // heavily adapted from https://github.com/KhronosGroup/glTF-WebGL-PBR
 

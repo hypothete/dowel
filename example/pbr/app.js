@@ -46,7 +46,7 @@ async function init() {
   ]);
 
   const sphereMesh = new SphereMesh(0.1, 64, 64);
-  const gridSize = 7;
+  const gridSize = 9;
   const gridSpread = 2.0;
   for (let i = 0; i < gridSize; i++) {
     for (let j = 0; j < gridSize; j++) {
