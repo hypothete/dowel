@@ -73,7 +73,7 @@ export default function PBRShader() {
         vec3 diffuseColor = uBaseColor;
         vec3 specularColor = mix(vec3(1.0), uBaseColor, uMetalness);
 
-        float spec = (F * G * D / (4.0 * NdotL * NdotV)) * brdf.x + brdf.y;
+        float spec = min(1.0, (F * G * D / (4.0 * NdotL * NdotV)) * brdf.x + brdf.y);
         float diff = (1.0 - F);
 
         vec3 color = NdotL * uPointColor * (diffuseColor * diff + specularColor * spec);

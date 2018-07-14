@@ -52,7 +52,8 @@ async function init() {
   const sphereMesh = new SphereMesh(1, 32, 32);
 
   const sphereShader = new PBRShader();
-  sphereShader.setColor(vec3.fromValues(0.6, 0.6, 0.6));
+  sphereShader.setColor(vec3.fromValues(0.25, 0.25, 0.25));
+  sphereShader.setSpecularColor(vec3.fromValues(0.1, 0.1, 0.1));
   sphereShader.setMetalness(0);
   sphereShader.setRoughness(1.0);
   sphereShader.updatePoint(point);

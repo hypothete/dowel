@@ -36,6 +36,7 @@ export default function PBRShader() {
       uniform vec3 uPointColor;
       uniform vec3 uCamPos;
       uniform vec3 uBaseColor;
+      uniform vec3 uSpecularColor;
       uniform sampler2D uTexture0;
       uniform sampler2D uTexture1;
       uniform float uMetalness;
@@ -100,12 +101,13 @@ export default function PBRShader() {
         float D = roughnessSq / (PI * f * f);
 
         vec3 diffuseColor = uBaseColor;
-        vec3 specularColor = mix(vec3(1.0), uBaseColor, uMetalness);
+        vec3 specularColor = mix(uSpecularColor, uBaseColor, uMetalness);
 
-        float spec = (F * G * D / (4.0 * NdotL * NdotV)) * brdf.x + brdf.y;
+        float spec = min(1.0, (F * G * D / (4.0 * NdotL * NdotV)) * brdf.x + brdf.y);
         float diff = (1.0 - F);
 
         vec3 color = NdotL * uPointColor * (diffuseColor * diff + specularColor * spec);
+        color = pow(color, vec3(1.0/2.2));
         fragColor = vec4(color, 1.0);
 
       }
@@ -128,6 +130,7 @@ export default function PBRShader() {
       texture0: gl.getUniformLocation(shader.shaderProgram, 'uTexture0'),
       texture1: gl.getUniformLocation(shader.shaderProgram, 'uTexture1'),
       baseColor: gl.getUniformLocation(shader.shaderProgram, 'uBaseColor'),
+      specularColor: gl.getUniformLocation(shader.shaderProgram, 'uSpecularColor'),
       metalness: gl.getUniformLocation(shader.shaderProgram, 'uMetalness'),
       roughness: gl.getUniformLocation(shader.shaderProgram, 'uRoughness'),
 
@@ -144,6 +147,15 @@ export default function PBRShader() {
     gl.useProgram(shader.shaderProgram);
     gl.uniform3f(
       shader.shaderLocations.uniformLocations.baseColor,
+      color[0],
+      color[1],
+      color[2]
+    );
+  };
+  shader.setSpecularColor = function(color) {
+    gl.useProgram(shader.shaderProgram);
+    gl.uniform3f(
+      shader.shaderLocations.uniformLocations.specularColor,
       color[0],
       color[1],
       color[2]
