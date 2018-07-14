@@ -67,7 +67,6 @@ export default function PBRShader() {
       vec3 perturbNormal(vec3 N, vec3 V, vec2 texCoord) {
         vec3 normalMap = texture(uTexture1, texCoord).rgb;
         normalMap = normalMap * 2.0 - 1.0;
-        normalMap.y = -normalMap.y;
         mat3 TBN = cotangentFrame(N, -V, texCoord);
         return normalize(TBN * normalMap);
       }
