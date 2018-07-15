@@ -47,8 +47,10 @@ function Mesh (objMesh) {
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.normals), gl.STATIC_DRAW);
       mesh.normalBuffer.itemSize = 3;
       mesh.normalBuffer.numItems = mesh.normals.length / mesh.normalBuffer.itemSize;
-      gl.enableVertexAttribArray(shaderLocations.attribLocations.vertexNormal);
-      gl.vertexAttribPointer(shaderLocations.attribLocations.vertexNormal, mesh.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
+      if (shaderLocations.attribLocations.vertexNormal) {
+        gl.enableVertexAttribArray(shaderLocations.attribLocations.vertexNormal);
+        gl.vertexAttribPointer(shaderLocations.attribLocations.vertexNormal, mesh.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
+      }
     },
     initializeBuffers (shaderLocations) {
       gl.bindVertexArray(mesh.vao);
@@ -5083,7 +5085,7 @@ function BoxMesh (w, h, d) {
     0.5, 0.75,
     0.75, 0.75
   ];
-  
+
   mesh.indices = [
     2, 0, 1,
     2, 3, 0,

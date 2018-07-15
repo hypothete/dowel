@@ -2,14 +2,13 @@ import {
   Camera,
   Model,
   Scene,
+  loadTexture,
   setGLContext,
-  PointLight,
   vec3,
-  SphereMesh,
-  loadTexture
+  BoxMesh
 } from '../../dist/dowel.js';
 
-import PBRShader from './pbr.js';
+import FlatShader from './flat.js';
 
 const can = document.querySelector('canvas');
 const gl = can.getContext('webgl2');
@@ -18,7 +17,7 @@ const keys = {};
 can.width = gl.canvas.clientWidth;
 can.height = gl.canvas.clientHeight;
 
-var scene, camera, shapePivot, point;
+var scene, camera, shapePivot, bunnyShader;
 
 setGLContext(gl); // must happen before anything
 init();
@@ -30,39 +29,24 @@ async function init() {
     'view cam',
     45,
     gl.canvas.width / gl.canvas.height,
-    0.1, 100.0,
+    1.0, 100.0,
     { x: 0, y: 0, w: gl.canvas.width, h: gl.canvas.height }
   );
   vec3.set(camera.translation, 0, 0, 0);
-
-  point = new PointLight('point', 2, vec3.fromValues(1.0, 1.0, 1.0));
-  vec3.set(point.translation,8, 0, 2);
 
   shapePivot = new Model('pivot', null, scene, null, null);
   vec3.set(shapePivot.translation, 0, 0, -3);
 
   const loaded = await Promise.all([
-    loadTexture('./brdfLUT.png'),
-    loadTexture('./normal.jpg'),
+    loadTexture('./escher.jpg'),
   ]);
 
-  // moon from:
-  // https://coryg89.github.io/technical/2013/06/01/photorealistic-3d-moon-demo-in-webgl-and-javascript/
+  const lizardTex = loaded[0];
 
-  const sphereMesh = new SphereMesh(1, 32, 32);
-
-  const sphereShader = new PBRShader();
-  sphereShader.setColor(vec3.fromValues(0.25, 0.25, 0.25));
-  sphereShader.setSpecularColor(vec3.fromValues(0.8, 0.8, 0.8));
-  sphereShader.setMetalness(0);
-  sphereShader.setRoughness(1.0);
-  sphereShader.updatePoint(point);
-  sphereShader.updateCamera(camera);
-
-  const sphere = new Model('sphere-normal', sphereMesh, shapePivot, sphereShader);
-  sphere.textures.push(loaded[0]);
-  sphere.textures.push(loaded[1]);
-
+  bunnyShader = new FlatShader();
+  const boxMesh = new BoxMesh(1, 1, 1);
+  const box = new Model('box', boxMesh, shapePivot, bunnyShader);
+  box.textures.push(lizardTex);
 
   gl.enable(gl.CULL_FACE);
   gl.enable(gl.DEPTH_TEST);
@@ -74,12 +58,7 @@ async function init() {
 
 function animate(ts) {
   requestAnimationFrame(animate);
-
   ts = ts / 1000;
-  // vec3.set(point.translation, Math.cos(ts) * 10.0, 0.0, Math.sin(ts) * 10.0);
-  // shapePivot.children.forEach(child => {
-  //   child.shader.updatePoint(point);
-  // });
 
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   gl.clearColor(0.0, 0.0, 0.0, 1.0);

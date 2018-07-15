@@ -70,7 +70,7 @@ export default function BoxMesh (w, h, d) {
     0.5, 0.75,
     0.75, 0.75
   ];
-  
+
   mesh.indices = [
     2, 0, 1,
     2, 3, 0,
