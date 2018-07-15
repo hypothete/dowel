@@ -39,6 +39,8 @@ export default function Model (name, mesh, parent, shader) {
         return;
       }
 
+      gl.cullFace(model.mesh.side || gl.BACK);
+
       gl.useProgram(model.shader.shaderProgram);
 
       gl.uniformMatrix4fv(model.shader.shaderLocations.uniformLocations.projectionMatrix, false, projectionMatrix);
@@ -54,7 +56,7 @@ export default function Model (name, mesh, parent, shader) {
         let glSlot = 'TEXTURE' + texInd;
         let uniformLoc = glSlot.toLowerCase();
         gl.activeTexture(gl[glSlot]);
-        gl.bindTexture(gl.TEXTURE_2D, model.textures[texInd]);
+        gl.bindTexture(model.textures[texInd].type, model.textures[texInd]);
         gl.uniform1i(model.shader.shaderLocations.uniformLocations[uniformLoc], texInd);
       }
 

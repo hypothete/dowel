@@ -3,6 +3,7 @@ import {getGLContext} from './gl-context';
 export default function Mesh (objMesh) {
   const gl = getGLContext();
   let mesh = {
+    side: gl.BACK,
     vao: gl.createVertexArray(),
     vertexBuffer: gl.createBuffer(),
     textureBuffer: gl.createBuffer(),
@@ -39,19 +40,21 @@ export default function Mesh (objMesh) {
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.normals), gl.STATIC_DRAW);
       mesh.normalBuffer.itemSize = 3;
       mesh.normalBuffer.numItems = mesh.normals.length / mesh.normalBuffer.itemSize;
-      if (shaderLocations.attribLocations.vertexNormal) {
-        gl.enableVertexAttribArray(shaderLocations.attribLocations.vertexNormal);
-        gl.vertexAttribPointer(shaderLocations.attribLocations.vertexNormal, mesh.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
-      }
+      gl.enableVertexAttribArray(shaderLocations.attribLocations.vertexNormal);
+      gl.vertexAttribPointer(shaderLocations.attribLocations.vertexNormal, mesh.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
     },
     initializeBuffers (shaderLocations) {
       gl.bindVertexArray(mesh.vao);
       mesh.updateVertices(shaderLocations);
-      mesh.updateTextures(shaderLocations);
+      if (shaderLocations.attribLocations.textureCoord && shaderLocations.attribLocations.textureCoord > -1) {
+        mesh.updateTextures(shaderLocations);
+      }
       mesh.updateIndices(shaderLocations);
-      mesh.updateNormals(shaderLocations);
+      if (shaderLocations.attribLocations.vertexNormal && shaderLocations.attribLocations.vertexNormal > -1) {
+        mesh.updateNormals(shaderLocations);
+      }
       gl.bindVertexArray(null);
-    }
+    },
   };
 
   return mesh;

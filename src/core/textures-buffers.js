@@ -4,6 +4,7 @@ export function loadTexture (url) {
   const gl = getGLContext();
   return new Promise(function (resolve) {
     const texture = gl.createTexture();
+    texture.type = gl.TEXTURE_2D;
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA,
       1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
@@ -27,11 +28,43 @@ export function loadTexture (url) {
 export function makeGenericTexture () {
   const gl = getGLContext();
   const texture = gl.createTexture();
+  texture.type = gl.TEXTURE_2D;
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  return texture;
+}
+
+export async function loadCubeMap(filenames) {
+  const gl = getGLContext();
+  const texture = gl.createTexture();
+  texture.type = gl.TEXTURE_CUBE_MAP;
+  const facePromises = [];
+  for (let filename of filenames) {
+    facePromises.push(new Promise((res, rej) => {
+      const image = new Image();
+      image.onload = function() {
+        res(image);
+      };
+      image,onerror = function(err) {
+        rej(err);
+      };
+      image.src = filename;
+    }));
+  }
+  const images = await Promise.all(facePromises);
+  gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
+  for(let i = 0; i < 6; i++) {
+    gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, gl.RGBA,
+      gl.RGBA, gl.UNSIGNED_BYTE, images[i]);
+  }
+  gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
   return texture;
 }
 

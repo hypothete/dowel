@@ -9,32 +9,23 @@ export default function FlatShader() {
       uniform mat4 uProjectionMatrix;
 
       in vec4 aVertexPosition;
-      in vec2 aTextureCoord;
-      in vec3 aVertexNormal;
-
-      out vec2 vTextureCoord;
+      out vec3 vCubeCoord;
 
       void main() {
-        vTextureCoord = aTextureCoord;
         gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix * aVertexPosition;
-
+        vCubeCoord = normalize(aVertexPosition.xyz);
       }
     `;
 
   const frag = `#version 300 es
       precision mediump float;
 
-      uniform sampler2D uSpotMap;
-      uniform vec3 uSpotPos;
-      uniform vec3 uSpotDir;
-      uniform float uSpotLimit;
-
-      in vec2 vTextureCoord;
-      
+      uniform samplerCube uCubeMap;
+      in vec3 vCubeCoord;
       out vec4 fragColor;
 
       void main() {
-        vec3 diffuse = texture(uSpotMap, vTextureCoord).rgb;
+        vec3 diffuse = texture(uCubeMap, vCubeCoord).rgb;
         fragColor = vec4(diffuse, 1.0);
       }
     `;
@@ -44,7 +35,6 @@ export default function FlatShader() {
   shader.shaderLocations = {
     attribLocations: {
       vertexPosition: gl.getAttribLocation(shader.shaderProgram, 'aVertexPosition'),
-      textureCoord: gl.getAttribLocation(shader.shaderProgram, 'aTextureCoord'),
     },
     uniformLocations: {
       projectionMatrix: gl.getUniformLocation(shader.shaderProgram, 'uProjectionMatrix'),

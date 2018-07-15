@@ -11,6 +11,7 @@ function setGLContext(context) {
 function Mesh (objMesh) {
   const gl = getGLContext();
   let mesh = {
+    side: gl.BACK,
     vao: gl.createVertexArray(),
     vertexBuffer: gl.createBuffer(),
     textureBuffer: gl.createBuffer(),
@@ -47,19 +48,21 @@ function Mesh (objMesh) {
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.normals), gl.STATIC_DRAW);
       mesh.normalBuffer.itemSize = 3;
       mesh.normalBuffer.numItems = mesh.normals.length / mesh.normalBuffer.itemSize;
-      if (shaderLocations.attribLocations.vertexNormal) {
-        gl.enableVertexAttribArray(shaderLocations.attribLocations.vertexNormal);
-        gl.vertexAttribPointer(shaderLocations.attribLocations.vertexNormal, mesh.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
-      }
+      gl.enableVertexAttribArray(shaderLocations.attribLocations.vertexNormal);
+      gl.vertexAttribPointer(shaderLocations.attribLocations.vertexNormal, mesh.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
     },
     initializeBuffers (shaderLocations) {
       gl.bindVertexArray(mesh.vao);
       mesh.updateVertices(shaderLocations);
-      mesh.updateTextures(shaderLocations);
+      if (shaderLocations.attribLocations.textureCoord && shaderLocations.attribLocations.textureCoord > -1) {
+        mesh.updateTextures(shaderLocations);
+      }
       mesh.updateIndices(shaderLocations);
-      mesh.updateNormals(shaderLocations);
+      if (shaderLocations.attribLocations.vertexNormal && shaderLocations.attribLocations.vertexNormal > -1) {
+        mesh.updateNormals(shaderLocations);
+      }
       gl.bindVertexArray(null);
-    }
+    },
   };
 
   return mesh;
@@ -3729,6 +3732,8 @@ function Model (name, mesh, parent, shader) {
         return;
       }
 
+      gl.cullFace(model.mesh.side || gl.BACK);
+
       gl.useProgram(model.shader.shaderProgram);
 
       gl.uniformMatrix4fv(model.shader.shaderLocations.uniformLocations.projectionMatrix, false, projectionMatrix);
@@ -3744,7 +3749,7 @@ function Model (name, mesh, parent, shader) {
         let glSlot = 'TEXTURE' + texInd;
         let uniformLoc = glSlot.toLowerCase();
         gl.activeTexture(gl[glSlot]);
-        gl.bindTexture(gl.TEXTURE_2D, model.textures[texInd]);
+        gl.bindTexture(model.textures[texInd].type, model.textures[texInd]);
         gl.uniform1i(model.shader.shaderLocations.uniformLocations[uniformLoc], texInd);
       }
 
@@ -3947,6 +3952,7 @@ function loadTexture (url) {
   const gl = getGLContext();
   return new Promise(function (resolve) {
     const texture = gl.createTexture();
+    texture.type = gl.TEXTURE_2D;
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA,
       1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
@@ -3970,11 +3976,43 @@ function loadTexture (url) {
 function makeGenericTexture () {
   const gl = getGLContext();
   const texture = gl.createTexture();
+  texture.type = gl.TEXTURE_2D;
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  return texture;
+}
+
+async function loadCubeMap(filenames) {
+  const gl = getGLContext();
+  const texture = gl.createTexture();
+  texture.type = gl.TEXTURE_CUBE_MAP;
+  const facePromises = [];
+  for (let filename of filenames) {
+    facePromises.push(new Promise((res, rej) => {
+      const image = new Image();
+      image.onload = function() {
+        res(image);
+      };
+      onerror = function(err) {
+        rej(err);
+      };
+      image.src = filename;
+    }));
+  }
+  const images = await Promise.all(facePromises);
+  gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
+  for(let i = 0; i < 6; i++) {
+    gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, gl.RGBA,
+      gl.RGBA, gl.UNSIGNED_BYTE, images[i]);
+  }
+  gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
   return texture;
 }
 
@@ -5023,31 +5061,37 @@ function BoxMesh (w, h, d) {
   let dl = d / 2;
 
   mesh.vertices = [
-    -wl, -hl, -dl,
-    wl, -hl, -dl,
-    wl, -hl,  dl,
-    -wl, -hl,  dl,
-
-    -wl,  hl, -dl,
-    wl,  hl, -dl,
-    wl,  hl,  dl,
-    -wl,  hl,  dl,
-
+    // +x
     wl,  hl,  dl,
     wl,  hl, -dl,
     wl, -hl, -dl,
     wl, -hl,  dl,
 
-    -wl,  hl,  dl,
-    wl,  hl,  dl,
-    wl, -hl,  dl,
-    -wl, -hl,  dl,
-
+    // -x
     -wl,  hl, -dl,
     -wl,  hl,  dl,
     -wl, -hl,  dl,
     -wl, -hl, -dl,
 
+    // +y
+    -wl,  hl, -dl,
+    wl,  hl, -dl,
+    wl,  hl,  dl,
+    -wl,  hl,  dl,
+
+    // -y
+    wl, -hl, -dl,
+    -wl, -hl, -dl,
+    -wl, -hl, dl,
+    wl, -hl, dl,
+
+    // +z
+    -wl,  hl,  dl,
+    wl,  hl,  dl,
+    wl, -hl,  dl,
+    -wl, -hl,  dl,
+
+    // -z
     wl,  hl, -dl,
     -wl,  hl, -dl,
     -wl, -hl, -dl,
@@ -5055,83 +5099,102 @@ function BoxMesh (w, h, d) {
   ];
 
   mesh.textures = [
-    0.25, 0.25,
-    0.5, 0.25,
-    0.25, 0.5,
-    0.5, 0.5,
 
-    0.75, 0.25,
-    1.0, 0.25,
-    0.75, 0.5,
-    1.0, 0.5,
+    // +x
+    0.5, 0.667,
+    0.75, 0.667,
+    0.75, 0.334,
+    0.5, 0.334,
 
-    0, 0.25,
-    0.25, 0.25,
-    0, 0.5,
-    0.25, 0.5,
+    // -x
+    0, 0.667,
+    0.25, 0.667,
+    0.25, 0.334,
+    0, 0.33,
 
-    0.25, 0,
+    // +y
+    0.25, 1.0,
+    0.5, 1.0,
+    0.5, 0.667,
+    0.25, 0.667,
+
+    // -y
+    0.25, 0.334,
+    0.5, 0.334,
     0.5, 0,
-    0.25, 0.25,
-    0.5, 0.25,
+    0.25, 0,
 
-    0.5, 0.25,
-    0.75, 0.25,
-    0.5, 0.5,
-    0.75, 0.5,
+    // +z
+    0.25, 0.667,
+    0.5, 0.667,
+    0.5, 0.334,
+    0.25, 0.334,
 
-    0.25, 0.5,
-    0.5, 0.5,
-    0.5, 0.75,
-    0.75, 0.75
+    // -z
+    0.75, 0.667,
+    1.0, 0.667,
+    1.0, 0.334,
+    0.75, 0.334,
   ];
 
   mesh.indices = [
-    2, 0, 1,
-    2, 3, 0,
+    // +x
+    1, 0, 2,
+    0, 3, 2,
 
+    // -x
     5, 4, 6,
     4, 7, 6,
 
+    // +y
     9, 8, 10,
     8, 11, 10,
 
+    // -y
     13, 12, 14,
     12, 15, 14,
 
+    // +z
     17, 16, 18,
     16, 19, 18,
 
+    // -z
     21, 20, 22,
     20, 23, 22
   ];
 
   mesh.normals = [
-    0, -1, 0,
-    0, -1, 0,
-    0, -1, 0,
-    0, -1, 0,
-
-    0, 1, 0,
-    0, 1, 0,
-    0, 1, 0,
-    0, 1, 0,
-
+    // +x
     1, 0, 0,
     1, 0, 0,
     1, 0, 0,
     1, 0, 0,
 
-    0, 0, 1,
-    0, 0, 1,
-    0, 0, 1,
-    0, 0, 1,
-
+    // -x
     -1, 0, 0,
     -1, 0, 0,
     -1, 0, 0,
     -1, 0, 0,
 
+    // +y
+    0, 1, 0,
+    0, 1, 0,
+    0, 1, 0,
+    0, 1, 0,
+
+    // -y
+    0, -1, 0,
+    0, -1, 0,
+    0, -1, 0,
+    0, -1, 0,
+
+    // +z
+    0, 0, 1,
+    0, 0, 1,
+    0, 0, 1,
+    0, 0, 1,
+
+    // -z
     0, 0, -1,
     0, 0, -1,
     0, 0, -1,
@@ -5250,4 +5313,4 @@ function PointLight(name, intensity, color) {
 
 // Core Imports
 
-export { Camera, Mesh, Model, Scene, Quad, Shader, getGLContext, setGLContext, initShaderProgram, loadShader, loadTexture, loadMesh, makeGenericTexture, makeFramebuffer, makeDepthTexture, BoxMesh, PlaneMesh, SphereMesh, SpotLight, PointLight, quat, mat4, vec3 };
+export { Camera, Mesh, Model, Scene, Quad, Shader, getGLContext, setGLContext, initShaderProgram, loadShader, loadTexture, loadMesh, loadCubeMap, makeGenericTexture, makeFramebuffer, makeDepthTexture, BoxMesh, PlaneMesh, SphereMesh, SpotLight, PointLight, quat, mat4, vec3 };

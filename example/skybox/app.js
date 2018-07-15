@@ -3,6 +3,7 @@ import {
   Model,
   Scene,
   loadTexture,
+  loadCubeMap,
   setGLContext,
   vec3,
   BoxMesh
@@ -38,15 +39,21 @@ async function init() {
   vec3.set(shapePivot.translation, 0, 0, -3);
 
   const loaded = await Promise.all([
-    loadTexture('./escher.jpg'),
+    loadCubeMap([
+      './yokohama/posx.jpg',
+      './yokohama/negx.jpg',
+      './yokohama/posy.jpg',
+      './yokohama/negy.jpg',
+      './yokohama/posz.jpg',
+      './yokohama/negz.jpg',
+    ]),
   ]);
 
-  const lizardTex = loaded[0];
-
   bunnyShader = new FlatShader();
-  const boxMesh = new BoxMesh(1, 1, 1);
+  const boxMesh = new BoxMesh(10, 10, 10);
+  boxMesh.side = gl.FRONT;
   const box = new Model('box', boxMesh, shapePivot, bunnyShader);
-  box.textures.push(lizardTex);
+  box.textures.push(loaded[0]);
 
   gl.enable(gl.CULL_FACE);
   gl.enable(gl.DEPTH_TEST);
