@@ -2,14 +2,14 @@ import {
   Camera,
   Model,
   Scene,
-  loadTexture,
   loadCubeMap,
+  loadMesh,
   setGLContext,
   vec3,
   BoxMesh
 } from '../../dist/dowel.js';
 
-import FlatShader from './flat.js';
+import CubemapShader from '../shared/cubemap.js';
 
 const can = document.querySelector('canvas');
 const gl = can.getContext('webgl2');
@@ -18,7 +18,7 @@ const keys = {};
 can.width = gl.canvas.clientWidth;
 can.height = gl.canvas.clientHeight;
 
-var scene, camera, shapePivot, bunnyShader;
+var scene, camera, shapePivot;
 
 setGLContext(gl); // must happen before anything
 init();
@@ -40,19 +40,20 @@ async function init() {
 
   const loaded = await Promise.all([
     loadCubeMap([
-      './yokohama/posx.jpg',
-      './yokohama/negx.jpg',
-      './yokohama/posy.jpg',
-      './yokohama/negy.jpg',
-      './yokohama/posz.jpg',
-      './yokohama/negz.jpg',
+      '../shared/yokohama/posx.jpg',
+      '../shared/yokohama/negx.jpg',
+      '../shared/yokohama/posy.jpg',
+      '../shared/yokohama/negy.jpg',
+      '../shared/yokohama/posz.jpg',
+      '../shared/yokohama/negz.jpg',
     ]),
+    loadMesh('../shared/teapot-scaled.obj')
   ]);
 
-  bunnyShader = new FlatShader();
+  const cubemapShader = new CubemapShader();
   const boxMesh = new BoxMesh(10, 10, 10);
   boxMesh.side = gl.FRONT;
-  const box = new Model('box', boxMesh, shapePivot, bunnyShader);
+  const box = new Model('box', boxMesh, shapePivot, cubemapShader);
   box.textures.push(loaded[0]);
 
   gl.enable(gl.CULL_FACE);

@@ -1,9 +1,20 @@
 import {Shader, getGLContext} from '../../dist/dowel.js';
 
-export default function PBRShader() {
+export default function PBRShader(options = {}) {
   const gl = getGLContext();
+  var vertDefines = '';
+  var fragDefines = '';
+
+  for (let define in options.vertDefines) {
+    vertDefines += `#define ${define} ${options.vertDefines[define]}`;
+  }
+
+  for (let define in options.fragDefines) {
+    fragDefines += `#define ${define} ${options.fragDefines[define]}`;
+  }
 
   const vert = `#version 300 es
+      ${vertDefines}
       uniform mat4 uModelMatrix;
       uniform mat4 uViewMatrix;
       uniform mat4 uProjectionMatrix;
@@ -29,6 +40,7 @@ export default function PBRShader() {
 
   const frag = `#version 300 es
       precision mediump float;
+      ${fragDefines}
       #define PI 3.1415926
 
       uniform vec3 uPointPos;
@@ -36,7 +48,9 @@ export default function PBRShader() {
       uniform vec3 uPointColor;
       uniform vec3 uCamPos;
       uniform vec3 uBaseColor;
+      uniform vec3 uSpecularColor;
       uniform sampler2D uTexture0;
+      uniform sampler2D uTexture1;
       uniform float uMetalness;
       uniform float uRoughness;
 
@@ -46,14 +60,48 @@ export default function PBRShader() {
       
       out vec4 fragColor;
 
+      #ifdef NORMAL_MAP
+      // this and next function - http://www.thetenthplanet.de/archives/1180
+      mat3 cotangentFrame(vec3 N, vec3 p, vec2 uv) {
+        vec3 dp1 = dFdx(p);
+        vec3 dp2 = dFdy(p);
+        vec2 duv1 = dFdx(uv);
+        vec2 duv2 = dFdy(uv);
+        // solve the linear system
+        vec3 dp2perp = cross(dp2, N);
+        vec3 dp1perp = cross(N, dp1);
+        vec3 T = dp2perp * duv1.x + dp1perp * duv2.x;
+        vec3 B = dp2perp * duv1.y + dp1perp * duv2.y;
+        // construct a scale-invariant frame
+        float invmax = inversesqrt( max( dot(T,T), dot(B,B) ) );
+        // side note - dot(A,A) gives the square of the magnitude of a vector.
+        return mat3( T * invmax, B * invmax, N );
+      }
+
+      vec3 perturbNormal(vec3 N, vec3 V, vec2 texCoord) {
+        vec3 normalMap = texture(uTexture1, texCoord).rgb;
+        normalMap = normalMap * 2.0 - 1.0;
+        mat3 TBN = cotangentFrame(N, -V, texCoord);
+        return normalize(TBN * normalMap);
+      }
+      #endif
+
       void main() {
+        
         vec3 lightDir = normalize(uPointPos - vVertPos);
         vec3 viewDir = normalize(uCamPos - vVertPos);
         vec3 halfDir = normalize(viewDir + lightDir);
-        float NdotL = dot(vNormal, lightDir);
-        float NdotV = dot(vNormal, viewDir);
+
+        vec3 normal = vNormal;
+        
+        #ifdef NORMAL_MAP
+        normal = perturbNormal(vNormal, viewDir, vTextureCoord);
+        #endif
+
+        float NdotL = dot(normal, lightDir);
+        float NdotV = dot(normal, viewDir);
         float VdotH = dot(viewDir, halfDir);
-        float NdotH = dot(vNormal, halfDir);
+        float NdotH = dot(normal, halfDir);
         vec2 brdf = texture(uTexture0, vec2(NdotV, uRoughness)).rg;
         brdf = pow(brdf, vec2(2.2));
 
@@ -71,7 +119,7 @@ export default function PBRShader() {
         float D = roughnessSq / (PI * f * f);
 
         vec3 diffuseColor = uBaseColor;
-        vec3 specularColor = mix(vec3(1.0), uBaseColor, uMetalness);
+        vec3 specularColor = mix(uSpecularColor, uBaseColor, uMetalness);
 
         float spec = min(1.0, (F * G * D / (4.0 * NdotL * NdotV)) * brdf.x + brdf.y);
         float diff = (1.0 - F);
@@ -97,7 +145,9 @@ export default function PBRShader() {
       normalMatrix: gl.getUniformLocation(shader.shaderProgram, 'uNormalMatrix'),
 
       texture0: gl.getUniformLocation(shader.shaderProgram, 'uTexture0'),
+      texture1: gl.getUniformLocation(shader.shaderProgram, 'uTexture1'),
       baseColor: gl.getUniformLocation(shader.shaderProgram, 'uBaseColor'),
+      specularColor: gl.getUniformLocation(shader.shaderProgram, 'uSpecularColor'),
       metalness: gl.getUniformLocation(shader.shaderProgram, 'uMetalness'),
       roughness: gl.getUniformLocation(shader.shaderProgram, 'uRoughness'),
 
@@ -114,6 +164,15 @@ export default function PBRShader() {
     gl.useProgram(shader.shaderProgram);
     gl.uniform3f(
       shader.shaderLocations.uniformLocations.baseColor,
+      color[0],
+      color[1],
+      color[2]
+    );
+  };
+  shader.setSpecularColor = function(color) {
+    gl.useProgram(shader.shaderProgram);
+    gl.uniform3f(
+      shader.shaderLocations.uniformLocations.specularColor,
       color[0],
       color[1],
       color[2]

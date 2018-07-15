@@ -9,7 +9,7 @@ import {
   loadTexture
 } from '../../dist/dowel.js';
 
-import PBRShader from './pbr.js';
+import PBRShader from '../shared/pbr.js';
 
 const can = document.querySelector('canvas');
 const gl = can.getContext('webgl2');
@@ -42,7 +42,7 @@ async function init() {
   vec3.set(shapePivot.translation, 0, 0, -3);
 
   const loaded = await Promise.all([
-    loadTexture('./brdfLUT.png'),
+    loadTexture('../shared/brdfLUT.png'),
   ]);
 
   const sphereMesh = new SphereMesh(0.1, 64, 64);
@@ -52,6 +52,7 @@ async function init() {
     for (let j = 0; j < gridSize; j++) {
       const sphereShader = new PBRShader();
       sphereShader.setColor(vec3.fromValues(0.9, 0.2, 0.2));
+      sphereShader.setSpecularColor(vec3.fromValues(1.0, 1.0, 1.0));
       sphereShader.setMetalness(i / (gridSize - 1));
       sphereShader.setRoughness(1.0 - j / (gridSize - 1));
       sphereShader.updatePoint(point);

@@ -12,7 +12,7 @@ import {
   BoxMesh
 } from '../../dist/dowel.js';
 
-import PhongBlinnShader from './phong-blinn.js';
+import PhongBlinnShader from '../shared/phong-blinn.js';
 
 const can = document.querySelector('canvas');
 const gl = can.getContext('webgl2');
@@ -47,8 +47,8 @@ async function init() {
   vec3.set(shapePivot.translation, 0, 0, -3);
 
   const loaded = await Promise.all([
-    loadTexture('./escher.jpg'),
-    loadMesh('./bunny.obj')
+    loadTexture('../shared/escher.jpg'),
+    loadMesh('../shared/bunny.obj')
   ]);
 
   const lizardTex = loaded[0];

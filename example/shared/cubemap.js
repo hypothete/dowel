@@ -1,6 +1,6 @@
 import {Shader, getGLContext} from '../../dist/dowel.js';
 
-export default function FlatShader() {
+export default function CubemapShader() {
   const gl = getGLContext();
 
   const vert = `#version 300 es

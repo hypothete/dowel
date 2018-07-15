@@ -9,7 +9,7 @@ import {
   loadTexture
 } from '../../dist/dowel.js';
 
-import PBRShader from './pbr.js';
+import PBRShader from '../shared/pbr.js';
 
 const can = document.querySelector('canvas');
 const gl = can.getContext('webgl2');
@@ -42,8 +42,8 @@ async function init() {
   vec3.set(shapePivot.translation, 0, 0, -3);
 
   const loaded = await Promise.all([
-    loadTexture('./brdfLUT.png'),
-    loadTexture('./normal.jpg'),
+    loadTexture('../shared/brdfLUT.png'),
+    loadTexture('../shared/normal.jpg'),
   ]);
 
   // moon from:
@@ -51,7 +51,7 @@ async function init() {
 
   const sphereMesh = new SphereMesh(1, 32, 32);
 
-  const sphereShader = new PBRShader();
+  const sphereShader = new PBRShader({ fragDefines: { NORMAL_MAP: true } });
   sphereShader.setColor(vec3.fromValues(0.25, 0.25, 0.25));
   sphereShader.setSpecularColor(vec3.fromValues(0.8, 0.8, 0.8));
   sphereShader.setMetalness(0);
