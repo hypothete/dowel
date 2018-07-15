@@ -10,6 +10,7 @@ import {
 } from '../../dist/dowel.js';
 
 import CubemapShader from '../shared/cubemap.js';
+import EnvmapShader from '../shared/envmap.js';
 
 const can = document.querySelector('canvas');
 const gl = can.getContext('webgl2');
@@ -56,6 +57,10 @@ async function init() {
   const box = new Model('box', boxMesh, shapePivot, cubemapShader);
   box.textures.push(loaded[0]);
 
+  const envmapShader = new EnvmapShader();
+  const teapot = new Model('teapot', loaded[1], shapePivot, envmapShader);
+  teapot.textures.push(loaded[0]);
+
   gl.enable(gl.CULL_FACE);
   gl.enable(gl.DEPTH_TEST);
   scene.updateMatrix();
@@ -64,9 +69,8 @@ async function init() {
   animate(0);
 }
 
-function animate(ts) {
+function animate() {
   requestAnimationFrame(animate);
-  ts = ts / 1000;
 
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   gl.clearColor(0.0, 0.0, 0.0, 1.0);

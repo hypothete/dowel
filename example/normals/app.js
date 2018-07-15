@@ -72,14 +72,8 @@ async function init() {
   animate(0);
 }
 
-function animate(ts) {
+function animate() {
   requestAnimationFrame(animate);
-
-  ts = ts / 1000;
-  // vec3.set(point.translation, Math.cos(ts) * 10.0, 0.0, Math.sin(ts) * 10.0);
-  // shapePivot.children.forEach(child => {
-  //   child.shader.updatePoint(point);
-  // });
 
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
