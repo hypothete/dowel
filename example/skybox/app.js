@@ -48,18 +48,25 @@ async function init() {
       '../shared/yokohama/posz.jpg',
       '../shared/yokohama/negz.jpg',
     ]),
-    loadMesh('../shared/teapot-scaled.obj')
+    loadMesh('../shared/teapot-scaled.obj'),
+    loadMesh('../shared/bunny.obj'),
   ]);
 
   const cubemapShader = new CubemapShader();
-  const boxMesh = new BoxMesh(10, 10, 10);
+  const boxMesh = new BoxMesh(100, 100, 100);
   boxMesh.side = gl.FRONT;
-  const box = new Model('box', boxMesh, shapePivot, cubemapShader);
+  const box = new Model('box', boxMesh, scene, cubemapShader);
   box.textures.push(loaded[0]);
 
-  const envmapShader = new EnvmapShader();
-  const teapot = new Model('teapot', loaded[1], shapePivot, envmapShader);
+  const reflectShader = new EnvmapShader();
+  const teapot = new Model('teapot', loaded[1], shapePivot, reflectShader);
   teapot.textures.push(loaded[0]);
+  vec3.set(teapot.translation, -1, 0, 0);
+
+  const refractShader = new EnvmapShader({ fragDefines: { REFRACT: true } });
+  const bunny = new Model('bunny', loaded[2], shapePivot, refractShader);
+  bunny.textures.push(loaded[0]);
+  vec3.set(bunny.translation, 1, 0, 0);
 
   gl.enable(gl.CULL_FACE);
   gl.enable(gl.DEPTH_TEST);

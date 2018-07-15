@@ -1,9 +1,21 @@
 import {Shader, getGLContext} from '../../dist/dowel.js';
 
-export default function EnvmapShader() {
+export default function EnvmapShader(options = {}) {
   const gl = getGLContext();
 
+  var vertDefines = '';
+  var fragDefines = '';
+
+  for (let define in options.vertDefines) {
+    vertDefines += `#define ${define} ${options.vertDefines[define]}`;
+  }
+
+  for (let define in options.fragDefines) {
+    fragDefines += `#define ${define} ${options.fragDefines[define]}`;
+  }
+
   const vert = `#version 300 es
+      ${vertDefines}
       uniform mat4 uModelMatrix;
       uniform mat4 uViewMatrix;
       uniform mat4 uProjectionMatrix;
@@ -23,6 +35,7 @@ export default function EnvmapShader() {
 
   const frag = `#version 300 es
       precision mediump float;
+      ${fragDefines}
 
       uniform samplerCube uCubeMap;
       uniform vec3 uCamPos;
@@ -34,7 +47,12 @@ export default function EnvmapShader() {
 
       void main() {
         vec3 viewDir = normalize(uCamPos - vVertPos);
+        #ifdef REFRACT
+        vec3 ref = refract(-viewDir, vNormal, 1.0/1.5);
+        #else
         vec3 ref = reflect(-viewDir, vNormal);
+        #endif
+        
         vec3 diffuse = texture(uCubeMap, ref).rgb;
         fragColor = vec4(diffuse, 1.0);
       }
