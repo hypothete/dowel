@@ -61,7 +61,12 @@ export default function Model (name, mesh, parent, shader) {
       }
 
       gl.bindVertexArray(model.mesh.vao);
-      gl.drawElements(gl.TRIANGLES, model.mesh.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+      if (typeof model.shader.shaderLocations.attribLocations.instanceOffset0 !== 'undefined') {
+        gl.drawElementsInstanced(gl.TRIANGLES, model.mesh.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0, model.mesh.offsetBuffer.numItems);
+      }
+      else {
+        gl.drawElements(gl.TRIANGLES, model.mesh.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+      }
       gl.bindVertexArray(null);
     }
   };
