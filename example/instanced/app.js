@@ -142,7 +142,20 @@ function makeOffsetsFromVerts(mesh) {
   let offsetArray = [];
   for (let i = 0; i < numInstances; i++) {
     const randVert = getVertexData(mesh, mesh.indices[Math.random() * mesh.indices.length | 0]);
-    const lookMat = mat4.targetTo(mat4.create(), vec3.create(), randVert.normal, vec3.fromValues(0, 1, 0));
+    const up = vec3.fromValues(0, 1, 0);
+    const out = vec3.fromValues(0, 0, 1);
+    const c1 = vec3.cross(vec3.create(), randVert.normal, out);
+    const c2 = vec3.cross(vec3.create(), randVert.normal, up);
+    let tang;
+    if (vec3.length(c1) > vec3.length(c2)) {
+      tang = c1;
+    }
+    else {
+      tang = c2;
+    }
+    vec3.normalize(tang, tang);
+    const bitg = vec3.cross(vec3.create(), tang, randVert.normal);
+    const lookMat = mat4.targetTo(mat4.create(), vec3.create(), bitg, vec3.fromValues(0, 1, 0));
     const transMat = mat4.fromTranslation(mat4.create(), randVert.position);
     const inst = mat4.mul(mat4.create(), transMat, lookMat);
     offsetArray = [
