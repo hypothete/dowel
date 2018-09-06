@@ -8,7 +8,7 @@ function setGLContext(context) {
   gl = context;
 }
 
-function Mesh (objMesh, offsets) {
+function Mesh (objMesh) {
   const gl = getGLContext();
   let mesh = {
     side: gl.BACK,
@@ -23,7 +23,7 @@ function Mesh (objMesh, offsets) {
     vertices: objMesh ? objMesh.vertices : [],
     textures: objMesh ? objMesh.textures : [],  // texture coords
     normals: objMesh ? objMesh.vertexNormals : [], // vertex normals
-    offsets,
+    offsets: [],
     updateVertices(shaderLocations) {
       gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vertexBuffer);
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.vertices), gl.STATIC_DRAW);
@@ -5082,11 +5082,11 @@ class Mesh$1 {
  * The Material class.
  */
 
-async function loadMesh (url, instanceOffsets) {
+async function loadMesh (url) {
   const objRequest = new Request(url);
   const objResponse = await fetch(objRequest);
   const objData = await objResponse.text();
-  return new Mesh(new Mesh$1(objData), instanceOffsets);
+  return new Mesh(new Mesh$1(objData));
 }
 
 function BoxMesh (w, h, d) {

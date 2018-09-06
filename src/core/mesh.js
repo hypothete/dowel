@@ -1,6 +1,6 @@
 import {getGLContext} from './gl-context';
 
-export default function Mesh (objMesh, offsets) {
+export default function Mesh (objMesh) {
   const gl = getGLContext();
   let mesh = {
     side: gl.BACK,
@@ -15,7 +15,7 @@ export default function Mesh (objMesh, offsets) {
     vertices: objMesh ? objMesh.vertices : [],
     textures: objMesh ? objMesh.textures : [],  // texture coords
     normals: objMesh ? objMesh.vertexNormals : [], // vertex normals
-    offsets,
+    offsets: [],
     updateVertices(shaderLocations) {
       gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vertexBuffer);
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.vertices), gl.STATIC_DRAW);
@@ -67,7 +67,6 @@ export default function Mesh (objMesh, offsets) {
       gl.vertexAttribPointer(shaderLocations.attribLocations.instanceOffset3, mesh.offsetBuffer.itemSize, gl.FLOAT, false, 16 * 4, 12 * 4);
       gl.vertexAttribDivisor(shaderLocations.attribLocations.instanceOffset3, 1);
     },
-
     initializeBuffers (shaderLocations) {
       gl.bindVertexArray(mesh.vao);
       mesh.updateVertices(shaderLocations);
