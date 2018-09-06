@@ -42,9 +42,12 @@ export default function PBRInstancedShader(options = {}) {
         );
         gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix * instanceOffset * aVertexPosition;
 
+        mat4 trans = transpose(uModelMatrix * instanceOffset);
+        mat4 transinv = inverse(trans);
+
         // make normals
-        vVertPos = vec4(uModelMatrix * aVertexPosition).xyz;
-        vNormal = normalize(uNormalMatrix * aVertexNormal);
+        vVertPos = vec4(uModelMatrix * instanceOffset * aVertexPosition).xyz;
+        vNormal = normalize(vec3(transinv * vec4(aVertexNormal, 0.0)).xyz);
       }
     `;
 

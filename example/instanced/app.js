@@ -7,7 +7,8 @@ import {
   PointLight,
   setGLContext,
   vec3,
-  mat4
+  mat4,
+  quat
 } from '../../dist/dowel.js';
 
 import PBRInstancedShader from './pbr-instanced.js';
@@ -19,7 +20,7 @@ const keys = {};
 can.width = gl.canvas.clientWidth;
 can.height = gl.canvas.clientHeight;
 
-var scene, camera, shapePivot, point, bunnyShader;
+var scene, camera, shapePivot, point, beadShader;
 
 setGLContext(gl); // must happen before anything
 init();
@@ -34,8 +35,8 @@ async function init() {
     1.0, 100.0,
     { x: 0, y: 0, w: gl.canvas.width, h: gl.canvas.height }
   );
-  vec3.set(camera.translation, 0, 1, 0);
-  vec3.set(camera.rotation, -10, 0, 0);
+  vec3.set(camera.translation, 0, 0, 0);
+  vec3.set(camera.rotation, 0, 0, 0);
 
   point = new PointLight('point', 2, vec3.fromValues(1.0, 1.0, 1.0));
   vec3.set(point.translation,3, 3, 3);
@@ -47,20 +48,20 @@ async function init() {
 
   const loaded = await Promise.all([
     loadTexture('../shared/brdfLUT.png'),
-    loadMesh('../shared/bunny.obj', offsets)
+    loadMesh('./bead.obj', offsets)
   ]);
 
-  const bunnyMesh = loaded[1];
+  const beadMesh = loaded[1];
 
-  bunnyShader = new PBRInstancedShader();
-  const bunny = new Model('bunny', bunnyMesh, shapePivot, bunnyShader);
-  bunny.textures.push(loaded[0]);
-  bunnyShader.setColor(vec3.fromValues(0.9, 0.2, 0.2));
-  bunnyShader.setSpecularColor(vec3.fromValues(1.0, 1.0, 1.0));
-  bunnyShader.setMetalness(0);
-  bunnyShader.setRoughness(1.0);
-  bunnyShader.updatePoint(point);
-  bunnyShader.updateCamera(camera);
+  beadShader = new PBRInstancedShader();
+  const bead = new Model('bead', beadMesh, shapePivot, beadShader);
+  bead.textures.push(loaded[0]);
+  beadShader.setColor(vec3.fromValues(0.9, 0.2, 0.2));
+  beadShader.setSpecularColor(vec3.fromValues(1.0, 1.0, 1.0));
+  beadShader.setMetalness(0.1);
+  beadShader.setRoughness(0.1);
+  beadShader.updatePoint(point);
+  beadShader.updateCamera(camera);
 
   gl.enable(gl.CULL_FACE);
   gl.enable(gl.DEPTH_TEST);
@@ -115,10 +116,20 @@ function enableControls () {
 }
 
 function makeOffsets() {
-  const numInstances = 4;
+  const numInstances = 1000;
   let offsetArray = [];
   for (let i = 0; i < numInstances; i++) {
-    let inst = mat4.fromTranslation(mat4.create(), vec3.fromValues(i * 2, 0, 0));
+    const randQuat = quat.fromEuler(
+      quat.create(),
+      360 * Math.random(),
+      360 * Math.random(),
+      360 * Math.random());
+    const randPos = vec3.fromValues(
+      Math.random() * 2 - 1,
+      Math.random() * 2 - 1,
+      Math.random() * 2 - 1
+    );
+    let inst = mat4.fromRotationTranslation(mat4.create(), randQuat, randPos);
     offsetArray = [
       ...offsetArray,
       ...inst
