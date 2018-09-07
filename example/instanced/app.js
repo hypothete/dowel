@@ -55,10 +55,10 @@ async function init() {
   const bunnyShader = new PBRShader();
   const bunny = new Model('bunny', bunnyMesh, shapePivot, bunnyShader);
   bunny.textures.push(loaded[0]);
-  bunnyShader.setColor(vec3.fromValues(0.6, 0.6, 0.6));
+  bunnyShader.setColor(vec3.fromValues(0.9, 0.2, 0.2));
   bunnyShader.setSpecularColor(vec3.fromValues(1.0, 1.0, 1.0));
   bunnyShader.setMetalness(0.1);
-  bunnyShader.setRoughness(0.8);
+  bunnyShader.setRoughness(0.1);
   bunnyShader.updatePoint(point);
   bunnyShader.updateCamera(camera);
 
@@ -140,11 +140,17 @@ function getVertexData(mesh, index) {
 function makeOffsetsFromVerts(mesh) {
   const numInstances = 5000;
   let offsetArray = [];
+  const savedIndices = [];
   for (let i = 0; i < numInstances; i++) {
-    const randVert = getVertexData(mesh, mesh.indices[Math.random() * mesh.indices.length | 0]);
+    const randIndex = mesh.indices[Math.random() * mesh.indices.length | 0];
+    if (savedIndices.indexOf(randIndex) > -1) {
+      continue;
+    }
+    savedIndices.push(randIndex);
+    const randVert = getVertexData(mesh, randIndex);
     const up = vec3.fromValues(0, 1, 0);
-    const out = vec3.fromValues(0, 0, 1);
-    const c1 = vec3.cross(vec3.create(), randVert.normal, out);
+    const dn = vec3.fromValues(0, -1, 0);
+    const c1 = vec3.cross(vec3.create(), randVert.normal, dn);
     const c2 = vec3.cross(vec3.create(), randVert.normal, up);
     let tang;
     if (vec3.length(c1) > vec3.length(c2)) {
@@ -153,34 +159,10 @@ function makeOffsetsFromVerts(mesh) {
     else {
       tang = c2;
     }
-    vec3.normalize(tang, tang);
     const bitg = vec3.cross(vec3.create(), tang, randVert.normal);
     const lookMat = mat4.targetTo(mat4.create(), vec3.create(), bitg, vec3.fromValues(0, 1, 0));
     const transMat = mat4.fromTranslation(mat4.create(), randVert.position);
     const inst = mat4.mul(mat4.create(), transMat, lookMat);
-    offsetArray = [
-      ...offsetArray,
-      ...inst
-    ];
-  }
-  return offsetArray;
-}
-
-function makeOffsets() {
-  const numInstances = 1000;
-  let offsetArray = [];
-  for (let i = 0; i < numInstances; i++) {
-    const randQuat = quat.fromEuler(
-      quat.create(),
-      360 * Math.random(),
-      360 * Math.random(),
-      360 * Math.random());
-    const randPos = vec3.fromValues(
-      Math.random() * 2 - 1,
-      Math.random() * 2 - 1,
-      Math.random() * 2 - 1
-    );
-    let inst = mat4.fromRotationTranslation(mat4.create(), randQuat, randPos);
     offsetArray = [
       ...offsetArray,
       ...inst
