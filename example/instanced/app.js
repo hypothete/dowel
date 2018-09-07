@@ -63,7 +63,7 @@ async function init() {
   bunnyShader.updateCamera(camera);
 
   const beadMesh = loaded[1];
-  beadMesh.offsets = makeOffsetsFromVerts(bunnyMesh);
+  beadMesh.offsets = colonizeOffsets(bunnyMesh);
   const beadShader = new PBRInstancedShader();
   const bead = new Model('bead', beadMesh, shapePivot, beadShader);
   bead.textures.push(loaded[0]);
@@ -130,11 +130,24 @@ function getVertexData(mesh, index) {
   const vPos = vec3.fromValues(...mesh.vertices.slice(index * 3, index * 3 + 3));
   const vNorm = vec3.fromValues(...mesh.normals.slice(index * 3, index * 3 + 3));
   const vUv = vec3.fromValues(...mesh.textures.slice(index * 2, index * 2 + 2));
+  const neighbors = getVertNeighbors(mesh, index);
   return {
     position: vPos,
     normal: vNorm,
-    uv: vUv
+    uv: vUv,
+    neighbors
   };
+}
+
+function getVertNeighbors(mesh, index) {
+  let neighbors = [];
+  for (let i = 0; i < mesh.indices.length; i += 3) {
+    const abc = mesh.indices.slice(i, i + 3);
+    if (abc.indexOf(index) > -1) {
+      neighbors = neighbors.concat(abc);
+    }
+  }
+  return neighbors.filter(nbr => nbr !== index);
 }
 
 function makeOffsetsFromVerts(mesh) {
@@ -148,18 +161,7 @@ function makeOffsetsFromVerts(mesh) {
     }
     savedIndices.push(randIndex);
     const randVert = getVertexData(mesh, randIndex);
-    const up = vec3.fromValues(0, 1, 0);
-    const dn = vec3.fromValues(0, -1, 0);
-    const c1 = vec3.cross(vec3.create(), randVert.normal, dn);
-    const c2 = vec3.cross(vec3.create(), randVert.normal, up);
-    let tang;
-    if (vec3.length(c1) > vec3.length(c2)) {
-      tang = c1;
-    }
-    else {
-      tang = c2;
-    }
-    const bitg = vec3.cross(vec3.create(), tang, randVert.normal);
+    const bitg = getBitangent(randVert.normal);
     const lookMat = mat4.targetTo(mat4.create(), vec3.create(), bitg, vec3.fromValues(0, 1, 0));
     const transMat = mat4.fromTranslation(mat4.create(), randVert.position);
     const inst = mat4.mul(mat4.create(), transMat, lookMat);
@@ -169,4 +171,53 @@ function makeOffsetsFromVerts(mesh) {
     ];
   }
   return offsetArray;
+}
+
+function getBitangent(normal) {
+  const up = vec3.fromValues(0, 1, 0);
+  const dn = vec3.fromValues(0, -1, 0);
+  const c1 = vec3.cross(vec3.create(), normal, dn);
+  const c2 = vec3.cross(vec3.create(), normal, up);
+  let tang;
+  if (vec3.length(c1) > vec3.length(c2)) {
+    tang = c1;
+  }
+  else {
+    tang = c2;
+  }
+  return vec3.cross(vec3.create(), tang, normal);
+}
+
+function colonizeOffsets(mesh) {
+  let offsetArray = [];
+  const savedIndices = [];
+  for(let i = 0; i < 10; i++) {
+    const startIndex = mesh.indices[Math.random() * mesh.indices.length | 0];
+    colonizeVert(startIndex, null, 100);
+  }
+
+  return offsetArray;
+
+  function colonizeVert(index, parentVert, count) {
+    if (savedIndices.indexOf(index) > -1) {
+      return;
+    }
+    if (count < 1) {
+      return;
+    }
+    const vertData = getVertexData(mesh, index);
+    savedIndices.push(index);
+    if (parent && vec3.length(vec3.sub(vertData.position, parent.position) > 0.01)) {
+      const bitg = getBitangent(vertData.normal);
+      const lookMat = mat4.targetTo(mat4.create(), vec3.create(), bitg, vec3.fromValues(0, 1, 0));
+      const transMat = mat4.fromTranslation(mat4.create(), vertData.position);
+      const inst = mat4.mul(mat4.create(), transMat, lookMat);
+      offsetArray = [
+        ...offsetArray,
+        ...inst
+      ];
+    }
+
+    vertData.neighbors.forEach(nbr => colonizeVert(nbr, count - 1));
+  }
 }
