@@ -150,29 +150,6 @@ function getVertNeighbors(mesh, index) {
   return neighbors.filter(nbr => nbr !== index);
 }
 
-function makeOffsetsFromVerts(mesh) {
-  const numInstances = 5000;
-  let offsetArray = [];
-  const savedIndices = [];
-  for (let i = 0; i < numInstances; i++) {
-    const randIndex = mesh.indices[Math.random() * mesh.indices.length | 0];
-    if (savedIndices.indexOf(randIndex) > -1) {
-      continue;
-    }
-    savedIndices.push(randIndex);
-    const randVert = getVertexData(mesh, randIndex);
-    const bitg = getBitangent(randVert.normal);
-    const lookMat = mat4.targetTo(mat4.create(), vec3.create(), bitg, vec3.fromValues(0, 1, 0));
-    const transMat = mat4.fromTranslation(mat4.create(), randVert.position);
-    const inst = mat4.mul(mat4.create(), transMat, lookMat);
-    offsetArray = [
-      ...offsetArray,
-      ...inst
-    ];
-  }
-  return offsetArray;
-}
-
 function getBitangent(normal) {
   const up = vec3.fromValues(0, 1, 0);
   const dn = vec3.fromValues(0, -1, 0);
