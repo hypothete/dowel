@@ -167,7 +167,8 @@ function getBitangent(normal) {
 
 function colonizeOffsets(mesh) {
   let offsetArray = [];
-  const spread = 0.03;
+  const minspread = 0.03;
+  const maxspread = 0.04;
   const savedIndices = [];
   for(let i = 0; i < 150; i++) {
     const startIndex = mesh.indices[Math.random() * mesh.indices.length | 0];
@@ -186,11 +187,11 @@ function colonizeOffsets(mesh) {
     savedIndices.push(index);
     const vertData = getVertexData(mesh, index);
     let distToParent;
+    let lastBead = parentVert;
     if(parentVert) {
       distToParent = vec3.length(vec3.sub(vec3.create(), vertData.position, parentVert.position));
     }
-    let parentToCheck;
-    if (!parentVert || distToParent > spread) {
+    if (!parentVert || (distToParent > minspread && distToParent < maxspread)) {
       const bitg = getBitangent(vertData.normal);
       const lookMat = mat4.targetTo(mat4.create(), vec3.create(), bitg, vec3.fromValues(0, 1, 0));
       const transMat = mat4.fromTranslation(mat4.create(), vertData.position);
@@ -199,12 +200,9 @@ function colonizeOffsets(mesh) {
         ...offsetArray,
         ...inst
       ];
-      parentToCheck = vertData;
-    }
-    else if (distToParent <= spread) {
-      parentToCheck = parentVert || vertData;
+      lastBead = vertData;
     }
 
-    vertData.neighbors.forEach(nbr => colonizeVert(nbr, parentToCheck, count - 1));
+    vertData.neighbors.forEach(nbr => colonizeVert(nbr, lastBead, count - 1));
   }
 }
