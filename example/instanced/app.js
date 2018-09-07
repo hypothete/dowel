@@ -55,10 +55,10 @@ async function init() {
   const bunnyShader = new PBRShader();
   const bunny = new Model('bunny', bunnyMesh, shapePivot, bunnyShader);
   bunny.textures.push(loaded[0]);
-  bunnyShader.setColor(vec3.fromValues(0.9, 0.2, 0.2));
+  bunnyShader.setColor(vec3.fromValues(0.47, 0.45, 0.4));
   bunnyShader.setSpecularColor(vec3.fromValues(1.0, 1.0, 1.0));
   bunnyShader.setMetalness(0.1);
-  bunnyShader.setRoughness(0.1);
+  bunnyShader.setRoughness(0.9);
   bunnyShader.updatePoint(point);
   bunnyShader.updateCamera(camera);
 
@@ -67,7 +67,7 @@ async function init() {
   const beadShader = new PBRInstancedShader();
   const bead = new Model('bead', beadMesh, shapePivot, beadShader);
   bead.textures.push(loaded[0]);
-  beadShader.setColor(vec3.fromValues(0.9, 0.2, 0.2));
+  beadShader.setColor(vec3.fromValues(0.1, 0.3, 0.8));
   beadShader.setSpecularColor(vec3.fromValues(1.0, 1.0, 1.0));
   beadShader.setMetalness(0.1);
   beadShader.setRoughness(0.1);
@@ -190,8 +190,9 @@ function getBitangent(normal) {
 
 function colonizeOffsets(mesh) {
   let offsetArray = [];
+  const spread = 0.03;
   const savedIndices = [];
-  for(let i = 0; i < 10; i++) {
+  for(let i = 0; i < 150; i++) {
     const startIndex = mesh.indices[Math.random() * mesh.indices.length | 0];
     colonizeVert(startIndex, null, 100);
   }
@@ -205,9 +206,14 @@ function colonizeOffsets(mesh) {
     if (count < 1) {
       return;
     }
-    const vertData = getVertexData(mesh, index);
     savedIndices.push(index);
-    if (parent && vec3.length(vec3.sub(vertData.position, parent.position) > 0.01)) {
+    const vertData = getVertexData(mesh, index);
+    let distToParent;
+    if(parentVert) {
+      distToParent = vec3.length(vec3.sub(vec3.create(), vertData.position, parentVert.position));
+    }
+    let parentToCheck;
+    if (!parentVert || distToParent > spread) {
       const bitg = getBitangent(vertData.normal);
       const lookMat = mat4.targetTo(mat4.create(), vec3.create(), bitg, vec3.fromValues(0, 1, 0));
       const transMat = mat4.fromTranslation(mat4.create(), vertData.position);
@@ -216,8 +222,12 @@ function colonizeOffsets(mesh) {
         ...offsetArray,
         ...inst
       ];
+      parentToCheck = vertData;
+    }
+    else if (distToParent <= spread) {
+      parentToCheck = parentVert || vertData;
     }
 
-    vertData.neighbors.forEach(nbr => colonizeVert(nbr, count - 1));
+    vertData.neighbors.forEach(nbr => colonizeVert(nbr, parentToCheck, count - 1));
   }
 }
