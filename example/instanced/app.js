@@ -7,16 +7,17 @@ import {
   PointLight,
   setGLContext,
   vec3,
-  mat4,
-  quat
+  mat4
 } from '../../dist/dowel.js';
 
 import PBRInstancedShader from './pbr-instanced.js';
 import PBRShader from '../shared/pbr.js';
+import { parallelUniformSurfaceSampling } from './poisson.js';
 
 const can = document.querySelector('canvas');
 const gl = can.getContext('webgl2');
 const keys = {};
+const loadMsg = document.querySelector('.loadmsg');
 
 can.width = gl.canvas.clientWidth;
 can.height = gl.canvas.clientHeight;
@@ -63,7 +64,12 @@ async function init() {
   bunnyShader.updateCamera(camera);
 
   const beadMesh = loaded[1];
-  beadMesh.offsets = colonizeOffsets(bunnyMesh);
+
+  const points = parallelUniformSurfaceSampling(bunnyMesh, 70000, 0.1, 3);
+  console.log(points.length);
+  const offsets = makeOffsets(points);
+  beadMesh.offsets = offsets;
+
   const beadShader = new PBRInstancedShader();
   const bead = new Model('bead', beadMesh, shapePivot, beadShader);
   bead.textures.push(loaded[0]);
@@ -79,6 +85,7 @@ async function init() {
   scene.updateMatrix();
   enableControls();
   console.log('loaded');
+  loadMsg.style.display = 'none';
   animate(0);
 }
 
@@ -126,30 +133,6 @@ function enableControls () {
   });
 }
 
-function getVertexData(mesh, index) {
-  const vPos = vec3.fromValues(...mesh.vertices.slice(index * 3, index * 3 + 3));
-  const vNorm = vec3.fromValues(...mesh.normals.slice(index * 3, index * 3 + 3));
-  const vUv = vec3.fromValues(...mesh.textures.slice(index * 2, index * 2 + 2));
-  const neighbors = getVertNeighbors(mesh, index);
-  return {
-    position: vPos,
-    normal: vNorm,
-    uv: vUv,
-    neighbors
-  };
-}
-
-function getVertNeighbors(mesh, index) {
-  let neighbors = [];
-  for (let i = 0; i < mesh.indices.length; i += 3) {
-    const abc = mesh.indices.slice(i, i + 3);
-    if (abc.indexOf(index) > -1) {
-      neighbors = neighbors.concat(abc);
-    }
-  }
-  return neighbors.filter(nbr => nbr !== index);
-}
-
 function getBitangent(normal) {
   const up = vec3.fromValues(0, 1, 0);
   const dn = vec3.fromValues(0, -1, 0);
@@ -165,43 +148,17 @@ function getBitangent(normal) {
   return vec3.cross(vec3.create(), tang, normal);
 }
 
-function colonizeOffsets(mesh) {
+function makeOffsets(points) {
   let offsetArray = [];
-  const spread = 0.03;
-  const savedIndices = [];
-  for(let i = 0; i < 150; i++) {
-    const startIndex = mesh.indices[Math.random() * mesh.indices.length | 0];
-    colonizeVert(startIndex, null, 100);
-  }
-
+  points.forEach(point => {
+    const bitg = getBitangent(point.normal);
+    const lookMat = mat4.targetTo(mat4.create(), vec3.create(), bitg, vec3.fromValues(0, 1, 0));
+    const transMat = mat4.fromTranslation(mat4.create(), point.position);
+    const inst = mat4.mul(mat4.create(), transMat, lookMat);
+    offsetArray = [
+      ...offsetArray,
+      ...inst
+    ];
+  });
   return offsetArray;
-
-  function colonizeVert(index, parentVert, count) {
-    if (savedIndices.indexOf(index) > -1) {
-      return;
-    }
-    if (count < 1) {
-      return;
-    }
-    savedIndices.push(index);
-    const vertData = getVertexData(mesh, index);
-    let distToParent;
-    if(parentVert) {
-      distToParent = vec3.length(vec3.sub(vec3.create(), vertData.position, parentVert.position));
-    }
-    let parentToCheck;
-    if (!parentVert || distToParent > spread) {
-      const bitg = getBitangent(vertData.normal);
-      const lookMat = mat4.targetTo(mat4.create(), vec3.create(), bitg, vec3.fromValues(0, 1, 0));
-      const transMat = mat4.fromTranslation(mat4.create(), vertData.position);
-      const inst = mat4.mul(mat4.create(), transMat, lookMat);
-      offsetArray = [
-        ...offsetArray,
-        ...inst
-      ];
-      parentToCheck = vertData;
-    }
-
-    vertData.neighbors.forEach(nbr => colonizeVert(nbr, parentToCheck, count - 1));
-  }
 }
