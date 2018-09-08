@@ -65,7 +65,7 @@ async function init() {
 
   const beadMesh = loaded[1];
 
-  const points = parallelUniformSurfaceSampling(bunnyMesh, 70000, 0.1, 3);
+  const points = parallelUniformSurfaceSampling(bunnyMesh, 20000, 0.02, 3);
   console.log(points.length);
   const offsets = makeOffsets(points);
   beadMesh.offsets = offsets;
