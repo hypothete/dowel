@@ -68,7 +68,7 @@ export default function LommelSeeligerShader() {
         float bias = 0.0005 * tan(acos(dotNL));
         bias = clamp(bias, 0.0, 0.0005);
         if (lightDepth < shadowCoord.z - bias) {
-          return 0.5;
+          return 0.1;
         }
         return 1.0;
       }
