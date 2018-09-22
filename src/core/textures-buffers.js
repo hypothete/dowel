@@ -72,6 +72,7 @@ export function makeFramebuffer () {
   const gl = getGLContext();
   // prep texture for drawing
   const texture = makeGenericTexture(gl);
+  texture.type = gl.TEXTURE_2D;
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA,
     gl.canvas.width, gl.canvas.height, 0,
@@ -84,19 +85,21 @@ export function makeFramebuffer () {
   return { buffer: fbo, texture };
 }
 
-export function makeDepthTexture (size) {
+export function makeDepthTexture (width, height) {
   const gl = getGLContext();
+  gl.activeTexture(gl.TEXTURE0);
   const texture = gl.createTexture();
+  texture.type = gl.TEXTURE_2D;
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.texImage2D(
     gl.TEXTURE_2D,
     0,
-    gl.DEPTH_COMPONENT24,
-    size,
-    size,
+    gl.DEPTH_COMPONENT16,
+    width,
+    height,
     0,
     gl.DEPTH_COMPONENT,
-    gl.UNSIGNED_INT,
+    gl.UNSIGNED_SHORT,
     null
   );
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
@@ -106,5 +109,6 @@ export function makeDepthTexture (size) {
   const fbo = gl.createFramebuffer();
   gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, texture, 0);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   return { buffer: fbo, texture };
 }

@@ -8,6 +8,7 @@ export default function LommelSeeligerShader() {
       uniform mat4 uViewMatrix;
       uniform mat4 uProjectionMatrix;
       uniform mat3 uNormalMatrix;
+      uniform mat4 uLightMatrix;
 
       in vec4 aVertexPosition;
       in vec2 aTextureCoord;
@@ -16,6 +17,19 @@ export default function LommelSeeligerShader() {
       out vec2 vTextureCoord;
       out vec3 vVertPos;
       out vec3 vNormal;
+      out vec4 vShadowCoord;
+
+      // mat4 texUnitConverter = mat4(
+      //   0.5, 0.0, 0.0, 0.5,
+      //   0.0, 0.5, 0.0, 0.5,
+      //   0.0, 0.0, 0.5, 0.5,
+      //   0.0, 0.0, 0.0, 1.0);
+
+        // mat4 texUnitConverter = mat4(
+        //   0.5, 0.0, 0.0, 0.0,
+        //   0.0, 0.5, 0.0, 0.0,
+        //   0.0, 0.0, 0.5, 0.0,
+        //   0.5, 0.5, 0.5, 1.0);
 
       void main() {
         vTextureCoord = aTextureCoord;
@@ -24,22 +38,40 @@ export default function LommelSeeligerShader() {
         // make normals
         vVertPos = vec4(uModelMatrix * aVertexPosition).xyz;
         vNormal = normalize(uNormalMatrix * aVertexNormal);
+
+        // shadow
+        vShadowCoord = uLightMatrix * uModelMatrix * aVertexPosition;
       }
     `;
 
   const frag = `#version 300 es
-      precision mediump float;
+      precision highp float;
+      precision highp int;
 
       uniform vec3 uPointPos;
       uniform float uPointIntensity;
       uniform vec3 uPointColor;
       uniform vec3 uCamPos;
+      uniform sampler2D uTexture0;
+      uniform vec2 uResolution;
 
       in vec2 vTextureCoord;
       in vec3 vVertPos;
       in vec3 vNormal;
+      in vec4 vShadowCoord;
       
       out vec4 fragColor;
+
+      float computeShadow(vec3 shadowCoord, float dotNL) {
+        float lightDepth = texture(uTexture0, shadowCoord.xy).r;
+
+        float bias = 0.0005 * tan(acos(dotNL));
+        bias = clamp(bias, 0.0, 0.0005);
+        if (lightDepth < shadowCoord.z - bias) {
+          return 0.5;
+        }
+        return 1.0;
+      }
 
       void main() {
         vec3 toView = normalize(uCamPos - vVertPos);
@@ -53,8 +85,14 @@ export default function LommelSeeligerShader() {
 
         vec3 diffuseColor = vec3(0.5, 0.5, 0.5);
 
-        vec3 finalColor = uPointIntensity * uPointColor * (brdf * diffuseColor);
+        vec3 shadowCoord = (vShadowCoord.xyz/vShadowCoord.w)/2.0 + 0.5;
+        float shadow = computeShadow(shadowCoord, mu0);
 
+        vec3 finalColor = uPointIntensity * uPointColor * (shadow * brdf * diffuseColor);
+        
+        // debug shadows
+        // finalColor = mix(brdf * diffuseColor, vec3(1.0, 0.0, 0.0), 1.0 - shadow);
+        
         fragColor = vec4(finalColor, 1.0);
       }
     `;
@@ -75,8 +113,10 @@ export default function LommelSeeligerShader() {
       pointPos: gl.getUniformLocation(shader.shaderProgram, 'uPointPos'),
       pointIntensity: gl.getUniformLocation(shader.shaderProgram, 'uPointIntensity'),
       pointColor: gl.getUniformLocation(shader.shaderProgram, 'uPointColor'),
-
       camPos: gl.getUniformLocation(shader.shaderProgram, 'uCamPos'),
+      texture0: gl.getUniformLocation(shader.shaderProgram, 'uTexture0'),
+      lightMatrix: gl.getUniformLocation(shader.shaderProgram, 'uLightMatrix'),
+      resolution: gl.getUniformLocation(shader.shaderProgram, 'uResolution'),
     },
   };
 
@@ -108,6 +148,19 @@ export default function LommelSeeligerShader() {
       camera.translation[1],
       camera.translation[2]
     );
+  };
+
+  shader.updateResolution = function(w, h) {
+    gl.useProgram(shader.shaderProgram);
+    gl.uniform2f(
+      shader.shaderLocations.uniformLocations.resolution,
+      w, h
+    );
+  };
+
+  shader.updateLightMatrix = function(lightMatrix) {
+    gl.useProgram(shader.shaderProgram);
+    gl.uniformMatrix4fv(shader.shaderLocations.uniformLocations.lightMatrix, false, lightMatrix);
   };
 
   return shader;

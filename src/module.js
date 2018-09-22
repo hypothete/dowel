@@ -4,6 +4,7 @@ import Mesh from './core/mesh';
 import Model from './core/model';
 import Scene from './core/scene';
 import Camera from './core/camera';
+import OrthographicCamera from './core/orthographic-camera';
 import Quad from './core/quad';
 import Shader from './core/shader';
 import {
@@ -52,6 +53,7 @@ export {
   SphereMesh,
   SpotLight,
   PointLight,
+  OrthographicCamera,
   quat,
   mat4,
   vec3

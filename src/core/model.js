@@ -23,14 +23,14 @@ export default function Model (name, mesh, parent, shader) {
       mat4.multiply(model.matrix, model.matrix, rotMat);
       mat4.scale(model.matrix, model.matrix, model.scale);
     },
-    draw: function () {
+    draw: function (overrideShader) {
       model.updateMatrix();
       let parentModelMatrix = matrixStack[matrixStack.length - 1];
       let modelMatrix = mat4.multiply(mat4.create(), parentModelMatrix, model.matrix);
       matrixStack.push(modelMatrix);
 
       for (let child of model.children) {
-        child.draw();
+        child.draw(overrideShader);
       }
 
       matrixStack.pop();
@@ -41,27 +41,37 @@ export default function Model (name, mesh, parent, shader) {
 
       gl.cullFace(model.mesh.side || gl.BACK);
 
-      gl.useProgram(model.shader.shaderProgram);
+      let shader;
 
-      gl.uniformMatrix4fv(model.shader.shaderLocations.uniformLocations.projectionMatrix, false, projectionMatrix);
-      gl.uniformMatrix4fv(model.shader.shaderLocations.uniformLocations.modelMatrix, false, modelMatrix);
-      gl.uniformMatrix4fv(model.shader.shaderLocations.uniformLocations.viewMatrix, false, viewMatrix);
+      if (overrideShader) {
+        shader = overrideShader;
+      }
+      else {
+        shader = model.shader;
+      }
+      gl.useProgram(shader.shaderProgram);
 
-      if (typeof model.shader.shaderLocations.uniformLocations.normalMatrix !== 'undefined') {
+      gl.uniformMatrix4fv(shader.shaderLocations.uniformLocations.projectionMatrix, false, projectionMatrix);
+      gl.uniformMatrix4fv(shader.shaderLocations.uniformLocations.modelMatrix, false, modelMatrix);
+      gl.uniformMatrix4fv(shader.shaderLocations.uniformLocations.viewMatrix, false, viewMatrix);
+
+      if (typeof shader.shaderLocations.uniformLocations.normalMatrix !== 'undefined') {
         mat3.normalFromMat4(normalMatrix, modelMatrix);
-        gl.uniformMatrix3fv(model.shader.shaderLocations.uniformLocations.normalMatrix, false, normalMatrix);
+        gl.uniformMatrix3fv(shader.shaderLocations.uniformLocations.normalMatrix, false, normalMatrix);
       }
 
       for (let texInd = 0; texInd < model.textures.length; texInd++) {
         let glSlot = 'TEXTURE' + texInd;
         let uniformLoc = glSlot.toLowerCase();
-        gl.activeTexture(gl[glSlot]);
-        gl.bindTexture(model.textures[texInd].type, model.textures[texInd]);
-        gl.uniform1i(model.shader.shaderLocations.uniformLocations[uniformLoc], texInd);
+        if (shader.shaderLocations.uniformLocations[uniformLoc]) {
+          gl.activeTexture(gl[glSlot]);
+          gl.bindTexture(model.textures[texInd].type, model.textures[texInd]);
+          gl.uniform1i(shader.shaderLocations.uniformLocations[uniformLoc], texInd);
+        }
       }
 
       gl.bindVertexArray(model.mesh.vao);
-      if (typeof model.shader.shaderLocations.attribLocations.instanceOffset0 !== 'undefined') {
+      if (typeof shader.shaderLocations.attribLocations.instanceOffset0 !== 'undefined') {
         gl.drawElementsInstanced(gl.TRIANGLES, model.mesh.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0, model.mesh.offsetBuffer.numItems);
       }
       else {
@@ -74,7 +84,7 @@ export default function Model (name, mesh, parent, shader) {
     parent.children.push(model);
   }
   if (model.mesh) {
-    model.mesh.initializeBuffers(model.shader.shaderLocations);
+    model.mesh.initializeBuffers(shader.shaderLocations);
   }
   return model;
 }

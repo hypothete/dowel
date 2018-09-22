@@ -75,7 +75,6 @@ function Mesh (objMesh) {
       gl.vertexAttribPointer(shaderLocations.attribLocations.instanceOffset3, mesh.offsetBuffer.itemSize, gl.FLOAT, false, 16 * 4, 12 * 4);
       gl.vertexAttribDivisor(shaderLocations.attribLocations.instanceOffset3, 1);
     },
-
     initializeBuffers (shaderLocations) {
       gl.bindVertexArray(mesh.vao);
       mesh.updateVertices(shaderLocations);
@@ -3747,14 +3746,14 @@ function Model (name, mesh, parent, shader) {
       multiply$3(model.matrix, model.matrix, rotMat);
       scale$3(model.matrix, model.matrix, model.scale);
     },
-    draw: function () {
+    draw: function (overrideShader) {
       model.updateMatrix();
       let parentModelMatrix = matrixStack[matrixStack.length - 1];
       let modelMatrix = multiply$3(create$3(), parentModelMatrix, model.matrix);
       matrixStack.push(modelMatrix);
 
       for (let child of model.children) {
-        child.draw();
+        child.draw(overrideShader);
       }
 
       matrixStack.pop();
@@ -3765,27 +3764,37 @@ function Model (name, mesh, parent, shader) {
 
       gl.cullFace(model.mesh.side || gl.BACK);
 
-      gl.useProgram(model.shader.shaderProgram);
+      let shader;
 
-      gl.uniformMatrix4fv(model.shader.shaderLocations.uniformLocations.projectionMatrix, false, projectionMatrix);
-      gl.uniformMatrix4fv(model.shader.shaderLocations.uniformLocations.modelMatrix, false, modelMatrix);
-      gl.uniformMatrix4fv(model.shader.shaderLocations.uniformLocations.viewMatrix, false, viewMatrix);
+      if (overrideShader) {
+        shader = overrideShader;
+      }
+      else {
+        shader = model.shader;
+      }
+      gl.useProgram(shader.shaderProgram);
 
-      if (typeof model.shader.shaderLocations.uniformLocations.normalMatrix !== 'undefined') {
+      gl.uniformMatrix4fv(shader.shaderLocations.uniformLocations.projectionMatrix, false, projectionMatrix);
+      gl.uniformMatrix4fv(shader.shaderLocations.uniformLocations.modelMatrix, false, modelMatrix);
+      gl.uniformMatrix4fv(shader.shaderLocations.uniformLocations.viewMatrix, false, viewMatrix);
+
+      if (typeof shader.shaderLocations.uniformLocations.normalMatrix !== 'undefined') {
         normalFromMat4(normalMatrix, modelMatrix);
-        gl.uniformMatrix3fv(model.shader.shaderLocations.uniformLocations.normalMatrix, false, normalMatrix);
+        gl.uniformMatrix3fv(shader.shaderLocations.uniformLocations.normalMatrix, false, normalMatrix);
       }
 
       for (let texInd = 0; texInd < model.textures.length; texInd++) {
         let glSlot = 'TEXTURE' + texInd;
         let uniformLoc = glSlot.toLowerCase();
-        gl.activeTexture(gl[glSlot]);
-        gl.bindTexture(model.textures[texInd].type, model.textures[texInd]);
-        gl.uniform1i(model.shader.shaderLocations.uniformLocations[uniformLoc], texInd);
+        if (shader.shaderLocations.uniformLocations[uniformLoc]) {
+          gl.activeTexture(gl[glSlot]);
+          gl.bindTexture(model.textures[texInd].type, model.textures[texInd]);
+          gl.uniform1i(shader.shaderLocations.uniformLocations[uniformLoc], texInd);
+        }
       }
 
       gl.bindVertexArray(model.mesh.vao);
-      if (typeof model.shader.shaderLocations.attribLocations.instanceOffset0 !== 'undefined') {
+      if (typeof shader.shaderLocations.attribLocations.instanceOffset0 !== 'undefined') {
         gl.drawElementsInstanced(gl.TRIANGLES, model.mesh.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0, model.mesh.offsetBuffer.numItems);
       }
       else {
@@ -3798,7 +3807,7 @@ function Model (name, mesh, parent, shader) {
     parent.children.push(model);
   }
   if (model.mesh) {
-    model.mesh.initializeBuffers(model.shader.shaderLocations);
+    model.mesh.initializeBuffers(shader.shaderLocations);
   }
   return model;
 }
@@ -3841,7 +3850,10 @@ function Camera (name, fov, aspect, near, far, viewport) {
       translate$2(cam.matrix, cam.matrix, cam.translation);
       multiply$3(cam.matrix, cam.matrix, rotMat);
     },
-    render (scene, parent) {
+    getProjection() {
+      return perspective(create$3(), cam.fov * Math.PI / 180, cam.aspect, cam.near, cam.far);
+    },
+    render (scene, parent, overrideShader) {
       cam.updateMatrix();
       if (parent) {
         multiply$3(cam.matrix, parent.matrix, cam.matrix);
@@ -3851,13 +3863,61 @@ function Camera (name, fov, aspect, near, far, viewport) {
       gl.enable(gl.SCISSOR_TEST);
       gl.scissor(cam.viewport.x, cam.viewport.y, cam.viewport.w, cam.viewport.h);
       invert$3(viewMatrix, cam.matrix);
-      perspective(projectionMatrix, cam.fov * Math.PI / 180, cam.aspect, cam.near, cam.far);
+      copy$3(projectionMatrix, cam.getProjection());
 
       matrixStack.length = 0;
       matrixStack.push(scene.matrix);
 
       for (let child of scene.children) {
-        child.draw();
+        child.draw(overrideShader);
+      }
+
+      matrixStack.pop();
+
+      gl.disable(gl.SCISSOR_TEST);
+    }
+  };
+  return cam;
+}
+
+function OrthographicCamera (name, left, right, bottom, top, near, far, viewport) {
+  const gl = getGLContext();
+  const cam = {
+    name,
+    left, right, bottom, top,
+    near,
+    far,
+    viewport,
+    matrix: create$3(),
+    translation: create$4(),
+    rotation: create$4(),
+    updateMatrix () {
+      const rotQuat = fromEuler(create$6(), cam.rotation[0], cam.rotation[1], cam.rotation[2]);
+      const rotMat = fromQuat$1(create$3(), rotQuat);
+      copy$3(cam.matrix, create$3());
+      translate$2(cam.matrix, cam.matrix, cam.translation);
+      multiply$3(cam.matrix, cam.matrix, rotMat);
+    },
+    getProjection () {
+      return ortho(create$3(), cam.left, cam.right, cam.bottom, cam.top, cam.near, cam.far);
+    },
+    render (scene, parent, overrideShader) {
+      cam.updateMatrix();
+      if (parent) {
+        multiply$3(cam.matrix, parent.matrix, cam.matrix);
+      }
+
+      gl.viewport(cam.viewport.x, cam.viewport.y, cam.viewport.w, cam.viewport.h);
+      gl.enable(gl.SCISSOR_TEST);
+      gl.scissor(cam.viewport.x, cam.viewport.y, cam.viewport.w, cam.viewport.h);
+      invert$3(viewMatrix, cam.matrix);
+      copy$3(projectionMatrix, cam.getProjection());
+
+      matrixStack.length = 0;
+      matrixStack.push(scene.matrix);
+
+      for (let child of scene.children) {
+        child.draw(overrideShader);
       }
 
       matrixStack.pop();
@@ -3872,6 +3932,7 @@ function Quad (name, shader) {
   const gl = getGLContext();
   const quad = {
     name,
+    shader,
     mesh: {
       vertexBuffer: gl.createBuffer(),
       textureBuffer: gl.createBuffer(),
@@ -4056,6 +4117,7 @@ function makeFramebuffer () {
   const gl = getGLContext();
   // prep texture for drawing
   const texture = makeGenericTexture(gl);
+  texture.type = gl.TEXTURE_2D;
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA,
     gl.canvas.width, gl.canvas.height, 0,
@@ -4068,19 +4130,21 @@ function makeFramebuffer () {
   return { buffer: fbo, texture };
 }
 
-function makeDepthTexture (size) {
+function makeDepthTexture (width, height) {
   const gl = getGLContext();
+  gl.activeTexture(gl.TEXTURE0);
   const texture = gl.createTexture();
+  texture.type = gl.TEXTURE_2D;
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.texImage2D(
     gl.TEXTURE_2D,
     0,
-    gl.DEPTH_COMPONENT24,
-    size,
-    size,
+    gl.DEPTH_COMPONENT16,
+    width,
+    height,
     0,
     gl.DEPTH_COMPONENT,
-    gl.UNSIGNED_INT,
+    gl.UNSIGNED_SHORT,
     null
   );
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
@@ -4090,6 +4154,7 @@ function makeDepthTexture (size) {
   const fbo = gl.createFramebuffer();
   gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, texture, 0);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   return { buffer: fbo, texture };
 }
 
@@ -5349,4 +5414,4 @@ function PointLight(name, intensity, color) {
 
 // Core Imports
 
-export { Camera, Mesh, Model, Scene, Quad, Shader, getGLContext, setGLContext, initShaderProgram, loadShader, loadTexture, loadMesh, loadCubeMap, makeGenericTexture, makeFramebuffer, makeDepthTexture, BoxMesh, PlaneMesh, SphereMesh, SpotLight, PointLight, quat, mat4, vec3 };
+export { Camera, Mesh, Model, Scene, Quad, Shader, getGLContext, setGLContext, initShaderProgram, loadShader, loadTexture, loadMesh, loadCubeMap, makeGenericTexture, makeFramebuffer, makeDepthTexture, BoxMesh, PlaneMesh, SphereMesh, SpotLight, PointLight, OrthographicCamera, quat, mat4, vec3 };

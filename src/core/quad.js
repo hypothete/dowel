@@ -4,6 +4,7 @@ export default function Quad (name, shader) {
   const gl = getGLContext();
   const quad = {
     name,
+    shader,
     mesh: {
       vertexBuffer: gl.createBuffer(),
       textureBuffer: gl.createBuffer(),
