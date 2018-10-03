@@ -39,12 +39,12 @@ async function init() {
   vec3.set(camera.translation, 0, 1, 0);
   vec3.set(camera.rotation, -10, 0, 0);
 
-  spot = new SpotLight('spot', 1.0, vec3.fromValues(1.0, 1.0, 1.0), 0.5);
+  spot = new SpotLight('spot', 3.0, vec3.fromValues(1.0, 1.0, 1.0), 20);
   vec3.set(spot.translation, 0, 5, -3);
   vec3.set(spot.direction, 0, -1, 0);
 
   shapePivot = new Model('pivot', null, scene, null, null);
-  vec3.set(shapePivot.translation, 0, 0, -3);
+  vec3.set(shapePivot.translation, 0, 0, -5);
 
   const loaded = await Promise.all([
     loadTexture('../shared/escher.jpg'),
@@ -58,6 +58,7 @@ async function init() {
   const bunny = new Model('bunny', bunnyMesh, shapePivot, bunnyShader);
   bunny.textures.push(lizardTex);
   bunnyShader.updateSpot(spot);
+  bunnyShader.updateCamera(camera);
 
   const planeMesh = new PlaneMesh(5, 5, 5, 5);
   const plane = new Model('plane', planeMesh, shapePivot, bunnyShader);
@@ -87,7 +88,7 @@ async function init() {
 function animate(ts) {
   requestAnimationFrame(animate);
   ts = ts / 1000;
-  vec3.set(spot.direction, 0.25 * Math.sin(ts), -0.5 - 0.25 * Math.cos(ts / 2), -1);
+  vec3.set(spot.direction, 0.25 * Math.sin(ts), -1, -0.5 - 0.25 * Math.cos(ts / 2));
   bunnyShader.updateSpot(spot);
 
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);

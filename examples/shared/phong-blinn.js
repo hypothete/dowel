@@ -33,6 +33,8 @@ export default class PhongBlinnShader extends Shader {
       uniform vec3 uSpotPos;
       uniform vec3 uSpotDir;
       uniform float uSpotLimit;
+      uniform float uSpotIntensity;
+      uniform vec3 uCamPos;
 
       in vec2 vTextureCoord;
       in vec3 vVertPos;
@@ -44,26 +46,22 @@ export default class PhongBlinnShader extends Shader {
         vec3 diffuse = texture(uSpotMap, vTextureCoord).rgb;
         vec3 specColor = vec3(1.0);
 
-        // vec3 fdx = vec3(dFdx(vVertPos.x),dFdx(vVertPos.y),dFdx(vVertPos.z));
-        // vec3 fdy = vec3(dFdy(vVertPos.x),dFdy(vVertPos.y),dFdy(vVertPos.z));
-        vec3 normal = vNormal; // normalize(cross(fdx, fdy));
-        vec3 dirToSpot = normalize(uSpotPos - vVertPos);
+        vec3 normal = vNormal;
 
-        float lambertian = max(dot(dirToSpot,normal), 0.0);
+        vec3 fromSpot = normalize(uSpotPos - vVertPos);
+        float lambertian = max(dot(normal, fromSpot), 0.0);
         float specular = 0.0;
         float shininess = 10.0;
-        float ambient = 0.2;
+        vec3 ambient = vec3(0.2);
 
-        if (lambertian > 0.0 && dot(-uSpotDir, dirToSpot) >= uSpotLimit) {
-          vec3 viewDir = normalize(-vVertPos);
-          vec3 halfDir = normalize(viewDir-uSpotDir);
-          float specAngle = max(dot(halfDir, normal), 0.0);
-          specular = pow(specAngle, shininess);
+        if (lambertian > 0.0 && dot(normalize(uSpotDir), -fromSpot) >= uSpotLimit) {
+          vec3 fromView = normalize(uCamPos - vVertPos);
+          vec3 halfDir = normalize(fromView + fromSpot);
+          specular = pow(max(dot(normal, halfDir), 0.0), shininess);
         }
 
         fragColor = vec4(
-          diffuse * max(lambertian, ambient) +
-          specColor * specular,
+          diffuse * (ambient + uSpotIntensity * specColor * specular),
           1.0);
         
         fragColor.rgb *= 0.454545;
@@ -84,6 +82,8 @@ export default class PhongBlinnShader extends Shader {
     this.addUniform('uSpotPos');
     this.addUniform('uSpotDir');
     this.addUniform('uSpotLimit');
+    this.addUniform('uSpotIntensity');
+    this.addUniform('uCamPos');
 
   }
 
@@ -102,8 +102,22 @@ export default class PhongBlinnShader extends Shader {
       spot.direction[2]
     );
     this.gl.uniform1f(
+      this.shaderLocations.uniformLocations.uSpotIntensity,
+      spot.intensity
+    );
+    this.gl.uniform1f(
       this.shaderLocations.uniformLocations.uSpotLimit,
       Math.cos(spot.angle * Math.PI / 180)
+    );
+  }
+
+  updateCamera(camera) {
+    this.gl.useProgram(this.shaderProgram);
+    this.gl.uniform3f(
+      this.shaderLocations.uniformLocations.uCamPos,
+      camera.translation[0],
+      camera.translation[1],
+      camera.translation[2]
     );
   }
 }
