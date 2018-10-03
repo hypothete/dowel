@@ -1,6 +1,13 @@
 # dowel
 
-A toy library for learning WebGL2 concepts
+A lightweight WebGL2 helper library
+
+## Features
+
+* Easily extended shader class
+* Screen quad for rendering
+* Built-in scene graph
+* Perspective and orthographic cameras
 
 ## Installation and use
 
