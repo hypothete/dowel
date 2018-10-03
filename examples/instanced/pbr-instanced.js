@@ -132,8 +132,9 @@ export default class PBRInstancedShader extends Shader {
 
         vec3 diffuseColor = uBaseColor;
         vec3 specularColor = mix(uSpecularColor, uBaseColor, uMetalness);
+        specularColor = specularColor * brdf.x + brdf.y;
 
-        float spec = min(1.0, (F * G * D / (4.0 * NdotL * NdotV)) * brdf.x + brdf.y);
+        float spec = min(1.0, (F * G * D / (4.0 * NdotL * NdotV)));
         float diff = (1.0 - F);
 
         vec3 color = NdotL * uPointColor * uPointIntensity * (diffuseColor * diff + specularColor * spec);

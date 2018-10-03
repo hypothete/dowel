@@ -102,7 +102,7 @@ export default class PBRShader extends Shader {
         float NdotV = dot(normal, viewDir);
         float VdotH = dot(viewDir, halfDir);
         float NdotH = dot(normal, halfDir);
-        vec2 brdf = texture(uTexture0, vec2(NdotV, uRoughness)).rg;
+        vec2 brdf = texture(uTexture0, vec2(NdotV, 1.0 - uRoughness)).rg;
         brdf = pow(brdf, vec2(2.2));
 
         // heavily adapted from https://github.com/KhronosGroup/glTF-WebGL-PBR
@@ -120,8 +120,9 @@ export default class PBRShader extends Shader {
 
         vec3 diffuseColor = uBaseColor;
         vec3 specularColor = mix(uSpecularColor, uBaseColor, uMetalness);
+        specularColor = specularColor * brdf.x + brdf.y;
 
-        float spec = min(1.0, (F * G * D / (4.0 * NdotL * NdotV)) * brdf.x + brdf.y);
+        float spec = min(1.0, (F * G * D / (4.0 * NdotL * NdotV)));
         float diff = (1.0 - F);
 
         vec3 color = NdotL * uPointColor * uPointIntensity * (diffuseColor * diff + specularColor * spec);
