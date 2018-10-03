@@ -4018,48 +4018,45 @@ class Quad {
   }
 }
 
-function initShaderProgram(vsSource, fsSource) {
-  const gl = getGLContext();
-  const vertexShader = loadShader(gl.VERTEX_SHADER, vsSource);
-  const fragmentShader = loadShader(gl.FRAGMENT_SHADER, fsSource);
-
-  // Create the shader program
-
-  const shaderProgram = gl.createProgram();
-  gl.attachShader(shaderProgram, vertexShader);
-  gl.attachShader(shaderProgram, fragmentShader);
-  gl.linkProgram(shaderProgram);
-
-  if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-    console.error('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram));
-    return null;
-  }
-
-  return shaderProgram;
-}
-
-function loadShader(type, source) {
-  const gl = getGLContext();
-  const shader = gl.createShader(type);
-  gl.shaderSource(shader, source);
-  gl.compileShader(shader);
-
-  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    console.error('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
-    gl.deleteShader(shader);
-    return null;
-  }
-
-  return shader;
-}
-
-class shader {
+class Shader {
   constructor (vert, frag) {
-    this.shaderProgram = initShaderProgram(vert, frag);
+    this.gl = getGLContext();
+    this.shaderProgram = null;
     this.shaderLocations = {
       attribLocations: {},
       uniformLocations: {}
     };
+    this.initShaderProgram(vert, frag);
+  }
+
+  loadShader(type, source) {
+    const shader = this.gl.createShader(type);
+    this.gl.shaderSource(shader, source);
+    this.gl.compileShader(shader);
+
+    if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
+      const compileError = this.gl.getShaderInfoLog(shader);
+      console.error(`An error occurred compiling the shaders: ${compileError}`);
+      this.gl.deleteShader(shader);
+      return null;
+    }
+
+    return shader;
+  }
+
+  initShaderProgram(vsSource, fsSource) {
+    const vertexShader = this.loadShader(this.gl.VERTEX_SHADER, vsSource);
+    const fragmentShader = this.loadShader(this.gl.FRAGMENT_SHADER, fsSource);
+
+    this.shaderProgram = this.gl.createProgram();
+    this.gl.attachShader(this.shaderProgram, vertexShader);
+    this.gl.attachShader(this.shaderProgram, fragmentShader);
+    this.gl.linkProgram(this.shaderProgram);
+
+    if (!this.gl.getProgramParameter(this.shaderProgram, this.gl.LINK_STATUS)) {
+      const shaderInfo = this.gl.getProgramInfoLog(this.shaderProgram);
+      console.error(`Unable to initialize the shader program: ${shaderInfo}`);
+    }
   }
 }
 
@@ -5410,4 +5407,4 @@ class PointLight {
 
 // Core Imports
 
-export { Camera, Mesh, Model, Scene, Quad, shader as Shader, getGLContext, setGLContext, initShaderProgram, loadShader, loadTexture, loadMesh, loadCubeMap, makeGenericTexture, makeFramebuffer, makeDepthTexture, BoxMesh, PlaneMesh, SphereMesh, SpotLight, PointLight, OrthographicCamera, quat, mat4, vec3 };
+export { Camera, Mesh, Model, Scene, Quad, Shader, getGLContext, setGLContext, loadTexture, loadMesh, loadCubeMap, makeGenericTexture, makeFramebuffer, makeDepthTexture, BoxMesh, PlaneMesh, SphereMesh, SpotLight, PointLight, OrthographicCamera, quat, mat4, vec3 };

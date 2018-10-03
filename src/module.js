@@ -8,10 +8,6 @@ import OrthographicCamera from './core/orthographic-camera';
 import Quad from './core/quad';
 import Shader from './core/shader';
 import {
-  initShaderProgram,
-  loadShader
-} from './core/shader-utils';
-import {
   loadTexture,
   makeGenericTexture,
   makeFramebuffer,
@@ -40,8 +36,6 @@ export {
   Shader,
   getGLContext,
   setGLContext,
-  initShaderProgram,
-  loadShader,
   loadTexture,
   loadMesh,
   loadCubeMap,
