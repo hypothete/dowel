@@ -1,9 +1,8 @@
-import {Shader, getGLContext} from '../../dist/dowel.js';
+import {Shader} from '../../dist/dowel.js';
 
-export default function LommelSeeligerShader() {
-  const gl = getGLContext();
-
-  const vert = `#version 300 es
+export default class LommelSeeligerShader extends Shader {
+  constructor () {
+    const vert = `#version 300 es
       uniform mat4 uModelMatrix;
       uniform mat4 uViewMatrix;
       uniform mat4 uProjectionMatrix;
@@ -44,7 +43,7 @@ export default function LommelSeeligerShader() {
       }
     `;
 
-  const frag = `#version 300 es
+    const frag = `#version 300 es
       precision highp float;
       precision highp int;
 
@@ -97,71 +96,66 @@ export default function LommelSeeligerShader() {
       }
     `;
 
-  const shader = new Shader(vert, frag);
+    super(vert, frag);
 
-  shader.shaderLocations = {
-    attribLocations: {
-      vertexPosition: gl.getAttribLocation(shader.shaderProgram, 'aVertexPosition'),
-      textureCoord: gl.getAttribLocation(shader.shaderProgram, 'aTextureCoord'),
-      vertexNormal: gl.getAttribLocation(shader.shaderProgram, 'aVertexNormal'),
-    },
-    uniformLocations: {
-      projectionMatrix: gl.getUniformLocation(shader.shaderProgram, 'uProjectionMatrix'),
-      modelMatrix: gl.getUniformLocation(shader.shaderProgram, 'uModelMatrix'),
-      viewMatrix: gl.getUniformLocation(shader.shaderProgram, 'uViewMatrix'),
-      normalMatrix: gl.getUniformLocation(shader.shaderProgram, 'uNormalMatrix'),
-      pointPos: gl.getUniformLocation(shader.shaderProgram, 'uPointPos'),
-      pointIntensity: gl.getUniformLocation(shader.shaderProgram, 'uPointIntensity'),
-      pointColor: gl.getUniformLocation(shader.shaderProgram, 'uPointColor'),
-      camPos: gl.getUniformLocation(shader.shaderProgram, 'uCamPos'),
-      texture0: gl.getUniformLocation(shader.shaderProgram, 'uTexture0'),
-      lightMatrix: gl.getUniformLocation(shader.shaderProgram, 'uLightMatrix'),
-      resolution: gl.getUniformLocation(shader.shaderProgram, 'uResolution'),
-    },
-  };
+    this.addAttribute('aVertexPosition');
+    this.addAttribute('aTextureCoord');
+    this.addAttribute('aVertexNormal');
 
-  shader.updatePoint = function(point) {
-    gl.useProgram(shader.shaderProgram);
-    gl.uniform3f(
-      shader.shaderLocations.uniformLocations.pointPos,
+    this.addUniform('uProjectionMatrix');
+    this.addUniform('uModelMatrix');
+    this.addUniform('uViewMatrix');
+    this.addUniform('uNormalMatrix');
+    this.addUniform('uPointPos');
+    this.addUniform('uPointIntensity');
+    this.addUniform('uPointColor');
+    this.addUniform('uCamPos');
+    this.addUniform('uTexture0');
+    this.addUniform('uLightMatrix');
+    this.addUniform('uResolution');
+
+  }
+
+  updatePoint (point) {
+    this.gl.useProgram(this.shaderProgram);
+    this.gl.uniform3f(
+      this.shaderLocations.uniformLocations.uPointPos,
       point.translation[0],
       point.translation[1],
       point.translation[2]
     );
-    gl.uniform1f(
-      shader.shaderLocations.uniformLocations.pointIntensity,
+    this.gl.uniform1f(
+      this.shaderLocations.uniformLocations.uPointIntensity,
       point.intensity
     );
-    gl.uniform3f(
-      shader.shaderLocations.uniformLocations.pointColor,
+    this.gl.uniform3f(
+      this.shaderLocations.uniformLocations.uPointColor,
       point.color[0],
       point.color[1],
       point.color[2]
     );
-  };
+  }
 
-  shader.updateCamera = function(camera) {
-    gl.useProgram(shader.shaderProgram);
-    gl.uniform3f(
-      shader.shaderLocations.uniformLocations.camPos,
+  updateCamera (camera) {
+    this.gl.useProgram(this.shaderProgram);
+    this.gl.uniform3f(
+      this.shaderLocations.uniformLocations.uCamPos,
       camera.translation[0],
       camera.translation[1],
       camera.translation[2]
     );
-  };
+  }
 
-  shader.updateResolution = function(w, h) {
-    gl.useProgram(shader.shaderProgram);
-    gl.uniform2f(
-      shader.shaderLocations.uniformLocations.resolution,
+  updateResolution (w, h) {
+    this.gl.useProgram(this.shaderProgram);
+    this.gl.uniform2f(
+      this.shaderLocations.uniformLocations.uResolution,
       w, h
     );
-  };
+  }
 
-  shader.updateLightMatrix = function(lightMatrix) {
-    gl.useProgram(shader.shaderProgram);
-    gl.uniformMatrix4fv(shader.shaderLocations.uniformLocations.lightMatrix, false, lightMatrix);
-  };
-
-  return shader;
+  updateLightMatrix (lightMatrix) {
+    this.gl.useProgram(this.shaderProgram);
+    this.gl.uniformMatrix4fv(this.shaderLocations.uniformLocations.uLightMatrix, false, lightMatrix);
+  }
 }

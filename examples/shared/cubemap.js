@@ -1,9 +1,8 @@
-import {Shader, getGLContext} from '../../dist/dowel.js';
+import {Shader} from '../../dist/dowel.js';
 
-export default function CubemapShader() {
-  const gl = getGLContext();
-
-  const vert = `#version 300 es
+export default class CubemapShader extends Shader {
+  constructor () {
+    const vert = `#version 300 es
       uniform mat4 uModelMatrix;
       uniform mat4 uViewMatrix;
       uniform mat4 uProjectionMatrix;
@@ -17,7 +16,7 @@ export default function CubemapShader() {
       }
     `;
 
-  const frag = `#version 300 es
+    const frag = `#version 300 es
       precision mediump float;
 
       uniform samplerCube uCubeMap;
@@ -30,18 +29,13 @@ export default function CubemapShader() {
       }
     `;
 
-  const shader = new Shader(vert, frag);
+    super(vert, frag);
 
-  shader.shaderLocations = {
-    attribLocations: {
-      vertexPosition: gl.getAttribLocation(shader.shaderProgram, 'aVertexPosition'),
-    },
-    uniformLocations: {
-      projectionMatrix: gl.getUniformLocation(shader.shaderProgram, 'uProjectionMatrix'),
-      modelMatrix: gl.getUniformLocation(shader.shaderProgram, 'uModelMatrix'),
-      viewMatrix: gl.getUniformLocation(shader.shaderProgram, 'uViewMatrix'),
-    },
-  };
+    this.addAttribute('aVertexPosition');
 
-  return shader;
+    this.addUniform('uProjectionMatrix');
+    this.addUniform('uModelMatrix');
+    this.addUniform('uViewMatrix');
+
+  }
 }

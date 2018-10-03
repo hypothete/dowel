@@ -22,8 +22,8 @@ export default class Mesh {
     this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.vertices), this.gl.STATIC_DRAW);
     this.vertexBuffer.itemSize = 3;
     this.vertexBuffer.numItems = this.vertices.length / this.vertexBuffer.itemSize;
-    this.gl.enableVertexAttribArray(shaderLocations.attribLocations.vertexPosition);
-    this.gl.vertexAttribPointer(shaderLocations.attribLocations.vertexPosition, this.vertexBuffer.itemSize, this.gl.FLOAT, false, 0, 0);
+    this.gl.enableVertexAttribArray(shaderLocations.attribLocations.aVertexPosition);
+    this.gl.vertexAttribPointer(shaderLocations.attribLocations.aVertexPosition, this.vertexBuffer.itemSize, this.gl.FLOAT, false, 0, 0);
   }
 
   updateTextures(shaderLocations) {
@@ -31,8 +31,8 @@ export default class Mesh {
     this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.textures), this.gl.STATIC_DRAW);
     this.textureBuffer.itemSize = 2;
     this.textureBuffer.numItems = this.textures.length / this.textureBuffer.itemSize;
-    this.gl.enableVertexAttribArray(shaderLocations.attribLocations.textureCoord);
-    this.gl.vertexAttribPointer(shaderLocations.attribLocations.textureCoord, this.textureBuffer.itemSize, this.gl.FLOAT, false, 0, 0);
+    this.gl.enableVertexAttribArray(shaderLocations.attribLocations.aTextureCoord);
+    this.gl.vertexAttribPointer(shaderLocations.attribLocations.aTextureCoord, this.textureBuffer.itemSize, this.gl.FLOAT, false, 0, 0);
   }
 
   updateIndices() {
@@ -47,8 +47,8 @@ export default class Mesh {
     this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.normals), this.gl.STATIC_DRAW);
     this.normalBuffer.itemSize = 3;
     this.normalBuffer.numItems = this.normals.length / this.normalBuffer.itemSize;
-    this.gl.enableVertexAttribArray(shaderLocations.attribLocations.vertexNormal);
-    this.gl.vertexAttribPointer(shaderLocations.attribLocations.vertexNormal, this.normalBuffer.itemSize, this.gl.FLOAT, false, 0, 0);
+    this.gl.enableVertexAttribArray(shaderLocations.attribLocations.aVertexNormal);
+    this.gl.vertexAttribPointer(shaderLocations.attribLocations.aVertexNormal, this.normalBuffer.itemSize, this.gl.FLOAT, false, 0, 0);
   }
 
   updateOffsets(shaderLocations) {
@@ -56,38 +56,35 @@ export default class Mesh {
     this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.offsets), this.gl.STATIC_DRAW);
     this.offsetBuffer.itemSize = 4;
     this.offsetBuffer.numItems = this.offsets.length / 16;
-    this.gl.enableVertexAttribArray(shaderLocations.attribLocations.instanceOffset0);
-    this.gl.vertexAttribPointer(shaderLocations.attribLocations.instanceOffset0, this.offsetBuffer.itemSize, this.gl.FLOAT, false, 16 * 4, 0);
-    this.gl.vertexAttribDivisor(shaderLocations.attribLocations.instanceOffset0, 1);
+    this.gl.enableVertexAttribArray(shaderLocations.attribLocations.aInstanceOffset0);
+    this.gl.vertexAttribPointer(shaderLocations.attribLocations.aInstanceOffset0, this.offsetBuffer.itemSize, this.gl.FLOAT, false, 16 * 4, 0);
+    this.gl.vertexAttribDivisor(shaderLocations.attribLocations.aInstanceOffset0, 1);
 
-    this.gl.enableVertexAttribArray(shaderLocations.attribLocations.instanceOffset1);
-    this.gl.vertexAttribPointer(shaderLocations.attribLocations.instanceOffset1, this.offsetBuffer.itemSize, this.gl.FLOAT, false, 16 * 4, 4 * 4);
-    this.gl.vertexAttribDivisor(shaderLocations.attribLocations.instanceOffset1, 1);
+    this.gl.enableVertexAttribArray(shaderLocations.attribLocations.aInstanceOffset1);
+    this.gl.vertexAttribPointer(shaderLocations.attribLocations.aInstanceOffset1, this.offsetBuffer.itemSize, this.gl.FLOAT, false, 16 * 4, 4 * 4);
+    this.gl.vertexAttribDivisor(shaderLocations.attribLocations.aInstanceOffset1, 1);
 
-    this.gl.enableVertexAttribArray(shaderLocations.attribLocations.instanceOffset2);
-    this.gl.vertexAttribPointer(shaderLocations.attribLocations.instanceOffset2, this.offsetBuffer.itemSize, this.gl.FLOAT, false, 16 * 4, 8 * 4);
-    this.gl.vertexAttribDivisor(shaderLocations.attribLocations.instanceOffset2, 1);
+    this.gl.enableVertexAttribArray(shaderLocations.attribLocations.aInstanceOffset2);
+    this.gl.vertexAttribPointer(shaderLocations.attribLocations.aInstanceOffset2, this.offsetBuffer.itemSize, this.gl.FLOAT, false, 16 * 4, 8 * 4);
+    this.gl.vertexAttribDivisor(shaderLocations.attribLocations.aInstanceOffset2, 1);
 
-    this.gl.enableVertexAttribArray(shaderLocations.attribLocations.instanceOffset3);
-    this.gl.vertexAttribPointer(shaderLocations.attribLocations.instanceOffset3, this.offsetBuffer.itemSize, this.gl.FLOAT, false, 16 * 4, 12 * 4);
-    this.gl.vertexAttribDivisor(shaderLocations.attribLocations.instanceOffset3, 1);
+    this.gl.enableVertexAttribArray(shaderLocations.attribLocations.aInstanceOffset3);
+    this.gl.vertexAttribPointer(shaderLocations.attribLocations.aInstanceOffset3, this.offsetBuffer.itemSize, this.gl.FLOAT, false, 16 * 4, 12 * 4);
+    this.gl.vertexAttribDivisor(shaderLocations.attribLocations.aInstanceOffset3, 1);
   }
 
-  initializeBuffers (shaderLocations) {
+  initializeBuffers (shader) {
     this.gl.bindVertexArray(this.vao);
-    this.updateVertices(shaderLocations);
-    if (typeof shaderLocations.attribLocations.textureCoord !== 'undefined' &&
-      shaderLocations.attribLocations.textureCoord > -1) {
-      this.updateTextures(shaderLocations);
+    this.updateVertices(shader.shaderLocations);
+    if (shader.hasAttribute('aTextureCoord')) {
+      this.updateTextures(shader.shaderLocations);
     }
-    this.updateIndices(shaderLocations);
-    if (typeof shaderLocations.attribLocations.vertexNormal !== 'undefined' &&
-      shaderLocations.attribLocations.vertexNormal > -1) {
-      this.updateNormals(shaderLocations);
+    this.updateIndices(shader.shaderLocations);
+    if (shader.hasAttribute('aVertexNormal')) {
+      this.updateNormals(shader.shaderLocations);
     }
-    if (typeof shaderLocations.attribLocations.instanceOffset0 !== 'undefined' &&
-      shaderLocations.attribLocations.instanceOffset0 > -1) {
-      this.updateOffsets(shaderLocations);
+    if (shader.hasAttribute('aInstanceOffset0')) {
+      this.updateOffsets(shader.shaderLocations);
     }
     this.gl.bindVertexArray(null);
   }

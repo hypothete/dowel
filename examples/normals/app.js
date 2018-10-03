@@ -35,7 +35,7 @@ async function init() {
   );
   vec3.set(camera.translation, 0, 0, 0);
 
-  point = new PointLight('point', 2, vec3.fromValues(1.0, 1.0, 1.0));
+  point = new PointLight('point', 1, vec3.fromValues(1.0, 1.0, 1.0));
   vec3.set(point.translation,8, 0, 2);
 
   shapePivot = new Model('pivot', null, scene, null, null);

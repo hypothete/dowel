@@ -1,20 +1,19 @@
-import {Shader, getGLContext} from '../../dist/dowel.js';
+import {Shader} from '../../dist/dowel.js';
 
-export default function EnvmapShader(options = {}) {
-  const gl = getGLContext();
+export default class EnvmapShader extends Shader {
+  constructor (options = {}) {
+    let vertDefines = '';
+    let fragDefines = '';
 
-  var vertDefines = '';
-  var fragDefines = '';
+    for (let define in options.vertDefines) {
+      vertDefines += `#define ${define} ${options.vertDefines[define]}`;
+    }
 
-  for (let define in options.vertDefines) {
-    vertDefines += `#define ${define} ${options.vertDefines[define]}`;
-  }
+    for (let define in options.fragDefines) {
+      fragDefines += `#define ${define} ${options.fragDefines[define]}`;
+    }
 
-  for (let define in options.fragDefines) {
-    fragDefines += `#define ${define} ${options.fragDefines[define]}`;
-  }
-
-  const vert = `#version 300 es
+    const vert = `#version 300 es
       ${vertDefines}
       uniform mat4 uModelMatrix;
       uniform mat4 uViewMatrix;
@@ -33,7 +32,7 @@ export default function EnvmapShader(options = {}) {
       }
     `;
 
-  const frag = `#version 300 es
+    const frag = `#version 300 es
       precision mediump float;
       ${fragDefines}
 
@@ -58,31 +57,26 @@ export default function EnvmapShader(options = {}) {
       }
     `;
 
-  const shader = new Shader(vert, frag);
+    super(vert, frag);
 
-  shader.shaderLocations = {
-    attribLocations: {
-      vertexPosition: gl.getAttribLocation(shader.shaderProgram, 'aVertexPosition'),
-      vertexNormal: gl.getAttribLocation(shader.shaderProgram, 'aVertexNormal'),
-    },
-    uniformLocations: {
-      projectionMatrix: gl.getUniformLocation(shader.shaderProgram, 'uProjectionMatrix'),
-      modelMatrix: gl.getUniformLocation(shader.shaderProgram, 'uModelMatrix'),
-      viewMatrix: gl.getUniformLocation(shader.shaderProgram, 'uViewMatrix'),
-      normalMatrix: gl.getUniformLocation(shader.shaderProgram, 'uNormalMatrix'),
-      camPos: gl.getUniformLocation(shader.shaderProgram, 'uCamPos'),
-    },
-  };
+    this.addAttribute('aVertexPosition');
+    this.addAttribute('aVertexNormal');
 
-  shader.updateCamera = function(camera) {
-    gl.useProgram(shader.shaderProgram);
-    gl.uniform3f(
-      shader.shaderLocations.uniformLocations.camPos,
+    this.addUniform('uProjectionMatrix');
+    this.addUniform('uModelMatrix');
+    this.addUniform('uViewMatrix');
+    this.addUniform('uNormalMatrix');
+    this.addUniform('uCamPos');
+
+  }
+
+  updateCamera (camera) {
+    this.gl.useProgram(this.shaderProgram);
+    this.gl.uniform3f(
+      this.shaderLocations.uniformLocations.camPos,
       camera.translation[0],
       camera.translation[1],
       camera.translation[2]
     );
-  };
-
-  return shader;
+  }
 }

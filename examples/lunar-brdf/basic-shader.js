@@ -1,9 +1,9 @@
-import {Shader, getGLContext} from '../../dist/dowel.js';
+import {Shader} from '../../dist/dowel.js';
 
-export default function BasicShader() {
-  const gl = getGLContext();
+export default class BasicShader extends Shader {
 
-  const vert = `#version 300 es
+  constructor() {
+    const vert = `#version 300 es
 
       in vec4 aVertexPosition;
       in vec2 aTextureCoord;
@@ -18,7 +18,7 @@ export default function BasicShader() {
       }
     `;
 
-  const frag = `#version 300 es
+    const frag = `#version 300 es
       precision mediump float;
 
       uniform sampler2D uTexture0;
@@ -41,18 +41,11 @@ export default function BasicShader() {
       }
     `;
 
-  const shader = new Shader(vert, frag);
+    super(vert, frag);
 
-  shader.shaderLocations = {
-    attribLocations: {
-      vertexPosition: gl.getAttribLocation(shader.shaderProgram, 'aVertexPosition'),
-      textureCoord: gl.getAttribLocation(shader.shaderProgram, 'aTextureCoord'),
-    },
-    uniformLocations: {
+    this.addAttribute('aVertexPosition');
+    this.addAttribute('aTextureCoord');
 
-      texture0: gl.getUniformLocation(shader.shaderProgram, 'uTexture0'),
-    },
-  };
-
-  return shader;
+    this.addUniform('uTexture0');
+  }
 }

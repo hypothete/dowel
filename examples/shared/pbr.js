@@ -1,19 +1,19 @@
-import {Shader, getGLContext} from '../../dist/dowel.js';
+import {Shader} from '../../dist/dowel.js';
 
-export default function PBRShader(options = {}) {
-  const gl = getGLContext();
-  var vertDefines = '';
-  var fragDefines = '';
+export default class PBRShader extends Shader {
+  constructor (options = {}) {
+    let vertDefines = '';
+    let fragDefines = '';
 
-  for (let define in options.vertDefines) {
-    vertDefines += `#define ${define} ${options.vertDefines[define]}`;
-  }
+    for (let define in options.vertDefines) {
+      vertDefines += `#define ${define} ${options.vertDefines[define]}`;
+    }
 
-  for (let define in options.fragDefines) {
-    fragDefines += `#define ${define} ${options.fragDefines[define]}`;
-  }
+    for (let define in options.fragDefines) {
+      fragDefines += `#define ${define} ${options.fragDefines[define]}`;
+    }
 
-  const vert = `#version 300 es
+    const vert = `#version 300 es
       ${vertDefines}
       uniform mat4 uModelMatrix;
       uniform mat4 uViewMatrix;
@@ -38,7 +38,7 @@ export default function PBRShader(options = {}) {
       }
     `;
 
-  const frag = `#version 300 es
+    const frag = `#version 300 es
       precision mediump float;
       ${fragDefines}
       #define PI 3.1415926
@@ -124,106 +124,97 @@ export default function PBRShader(options = {}) {
         float spec = min(1.0, (F * G * D / (4.0 * NdotL * NdotV)) * brdf.x + brdf.y);
         float diff = (1.0 - F);
 
-        vec3 color = NdotL * uPointColor * (diffuseColor * diff + specularColor * spec);
+        vec3 color = NdotL * uPointColor * uPointIntensity * (diffuseColor * diff + specularColor * spec);
         fragColor = vec4(color, 1.0);
 
       }
     `;
 
-  const shader = new Shader(vert, frag);
+    super(vert, frag);
 
-  shader.shaderLocations = {
-    attribLocations: {
-      vertexPosition: gl.getAttribLocation(shader.shaderProgram, 'aVertexPosition'),
-      textureCoord: gl.getAttribLocation(shader.shaderProgram, 'aTextureCoord'),
-      vertexNormal: gl.getAttribLocation(shader.shaderProgram, 'aVertexNormal'),
-    },
-    uniformLocations: {
-      projectionMatrix: gl.getUniformLocation(shader.shaderProgram, 'uProjectionMatrix'),
-      modelMatrix: gl.getUniformLocation(shader.shaderProgram, 'uModelMatrix'),
-      viewMatrix: gl.getUniformLocation(shader.shaderProgram, 'uViewMatrix'),
-      normalMatrix: gl.getUniformLocation(shader.shaderProgram, 'uNormalMatrix'),
+    this.addAttribute('aVertexPosition');
+    this.addAttribute('aTextureCoord');
+    this.addAttribute('aVertexNormal');
 
-      texture0: gl.getUniformLocation(shader.shaderProgram, 'uTexture0'),
-      texture1: gl.getUniformLocation(shader.shaderProgram, 'uTexture1'),
-      baseColor: gl.getUniformLocation(shader.shaderProgram, 'uBaseColor'),
-      specularColor: gl.getUniformLocation(shader.shaderProgram, 'uSpecularColor'),
-      metalness: gl.getUniformLocation(shader.shaderProgram, 'uMetalness'),
-      roughness: gl.getUniformLocation(shader.shaderProgram, 'uRoughness'),
+    this.addUniform('uProjectionMatrix');
+    this.addUniform('uModelMatrix');
+    this.addUniform('uViewMatrix');
+    this.addUniform('uNormalMatrix');
+    this.addUniform('uTexture0');
+    this.addUniform('uTexture1');
+    this.addUniform('uBaseColor');
+    this.addUniform('uSpecularColor');
+    this.addUniform('uMetalness');
+    this.addUniform('uRoughness');
+    this.addUniform('uPointPos');
+    this.addUniform('uPointIntensity');
+    this.addUniform('uPointColor');
+    this.addUniform('uCamPos');
+  }
 
-      pointPos: gl.getUniformLocation(shader.shaderProgram, 'uPointPos'),
-      pointIntensity: gl.getUniformLocation(shader.shaderProgram, 'uPointIntensity'),
-      pointColor: gl.getUniformLocation(shader.shaderProgram, 'uPointColor'),
-
-      camPos: gl.getUniformLocation(shader.shaderProgram, 'uCamPos'),
-
-    },
-  };
-
-  shader.setColor = function(color) {
-    gl.useProgram(shader.shaderProgram);
-    gl.uniform3f(
-      shader.shaderLocations.uniformLocations.baseColor,
+  setColor (color) {
+    this.gl.useProgram(this.shaderProgram);
+    this.gl.uniform3f(
+      this.shaderLocations.uniformLocations.uBaseColor,
       color[0],
       color[1],
       color[2]
     );
-  };
-  shader.setSpecularColor = function(color) {
-    gl.useProgram(shader.shaderProgram);
-    gl.uniform3f(
-      shader.shaderLocations.uniformLocations.specularColor,
+  }
+
+  setSpecularColor (color) {
+    this.gl.useProgram(this.shaderProgram);
+    this.gl.uniform3f(
+      this.shaderLocations.uniformLocations.uSpecularColor,
       color[0],
       color[1],
       color[2]
     );
-  };
+  }
 
-  shader.setMetalness = function(metalness) {
-    gl.useProgram(shader.shaderProgram);
-    gl.uniform1f(
-      shader.shaderLocations.uniformLocations.metalness,
+  setMetalness (metalness) {
+    this.gl.useProgram(this.shaderProgram);
+    this.gl.uniform1f(
+      this.shaderLocations.uniformLocations.uMetalness,
       metalness
     );
-  };
+  }
 
-  shader.setRoughness = function(roughness) {
-    gl.useProgram(shader.shaderProgram);
-    gl.uniform1f(
-      shader.shaderLocations.uniformLocations.roughness,
+  setRoughness (roughness) {
+    this.gl.useProgram(this.shaderProgram);
+    this.gl.uniform1f(
+      this.shaderLocations.uniformLocations.uRoughness,
       roughness
     );
-  };
+  }
 
-  shader.updatePoint = function(point) {
-    gl.useProgram(shader.shaderProgram);
-    gl.uniform3f(
-      shader.shaderLocations.uniformLocations.pointPos,
+  updatePoint (point) {
+    this.gl.useProgram(this.shaderProgram);
+    this.gl.uniform3f(
+      this.shaderLocations.uniformLocations.uPointPos,
       point.translation[0],
       point.translation[1],
       point.translation[2]
     );
-    gl.uniform1f(
-      shader.shaderLocations.uniformLocations.pointIntensity,
+    this.gl.uniform1f(
+      this.shaderLocations.uniformLocations.uPointIntensity,
       point.intensity
     );
-    gl.uniform3f(
-      shader.shaderLocations.uniformLocations.pointColor,
+    this.gl.uniform3f(
+      this.shaderLocations.uniformLocations.uPointColor,
       point.color[0],
       point.color[1],
       point.color[2]
     );
-  };
+  }
 
-  shader.updateCamera = function(camera) {
-    gl.useProgram(shader.shaderProgram);
-    gl.uniform3f(
-      shader.shaderLocations.uniformLocations.camPos,
+  updateCamera (camera) {
+    this.gl.useProgram(this.shaderProgram);
+    this.gl.uniform3f(
+      this.shaderLocations.uniformLocations.uCamPos,
       camera.translation[0],
       camera.translation[1],
       camera.translation[2]
     );
-  };
-
-  return shader;
+  }
 }

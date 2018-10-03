@@ -1,9 +1,8 @@
-import {Shader, getGLContext} from '../../dist/dowel.js';
+import {Shader} from '../../dist/dowel.js';
 
-export default function PhongBlinnShader() {
-  const gl = getGLContext();
-
-  const vert = `#version 300 es
+export default class PhongBlinnShader extends Shader {
+  constructor () {
+    const vert = `#version 300 es
       uniform mat4 uModelMatrix;
       uniform mat4 uViewMatrix;
       uniform mat4 uProjectionMatrix;
@@ -27,7 +26,7 @@ export default function PhongBlinnShader() {
       }
     `;
 
-  const frag = `#version 300 es
+    const frag = `#version 300 es
       precision mediump float;
 
       uniform sampler2D uSpotMap;
@@ -71,45 +70,40 @@ export default function PhongBlinnShader() {
       }
     `;
 
-  const shader = new Shader(vert, frag);
+    super(vert, frag);
 
-  shader.shaderLocations = {
-    attribLocations: {
-      vertexPosition: gl.getAttribLocation(shader.shaderProgram, 'aVertexPosition'),
-      textureCoord: gl.getAttribLocation(shader.shaderProgram, 'aTextureCoord'),
-      vertexNormal: gl.getAttribLocation(shader.shaderProgram, 'aVertexNormal'),
-    },
-    uniformLocations: {
-      projectionMatrix: gl.getUniformLocation(shader.shaderProgram, 'uProjectionMatrix'),
-      modelMatrix: gl.getUniformLocation(shader.shaderProgram, 'uModelMatrix'),
-      viewMatrix: gl.getUniformLocation(shader.shaderProgram, 'uViewMatrix'),
-      normalMatrix: gl.getUniformLocation(shader.shaderProgram, 'uNormalMatrix'),
-      texture0: gl.getUniformLocation(shader.shaderProgram, 'uSpotMap'),
-      spotPos: gl.getUniformLocation(shader.shaderProgram, 'uSpotPos'),
-      spotDir: gl.getUniformLocation(shader.shaderProgram, 'uSpotDir'),
-      spotLimit: gl.getUniformLocation(shader.shaderProgram, 'uSpotLimit'),
-    },
-  };
+    this.addAttribute('aVertexPosition');
+    this.addAttribute('aTextureCoord');
+    this.addAttribute('aVertexNormal');
 
-  shader.updateSpot = function(spot) {
-    gl.useProgram(shader.shaderProgram);
-    gl.uniform3f(
-      shader.shaderLocations.uniformLocations.spotPos,
+    this.addUniform('uProjectionMatrix');
+    this.addUniform('uModelMatrix');
+    this.addUniform('uViewMatrix');
+    this.addUniform('uNormalMatrix');
+    this.addUniform('uSpotMap');
+    this.addUniform('uSpotPos');
+    this.addUniform('uSpotDir');
+    this.addUniform('uSpotLimit');
+
+  }
+
+  updateSpot (spot) {
+    this.gl.useProgram(this.shaderProgram);
+    this.gl.uniform3f(
+      this.shaderLocations.uniformLocations.uSpotPos,
       spot.translation[0],
       spot.translation[1],
       spot.translation[2]
     );
-    gl.uniform3f(
-      shader.shaderLocations.uniformLocations.spotDir,
+    this.gl.uniform3f(
+      this.shaderLocations.uniformLocations.uSpotDir,
       spot.direction[0],
       spot.direction[1],
       spot.direction[2]
     );
-    gl.uniform1f(
-      shader.shaderLocations.uniformLocations.spotLimit,
+    this.gl.uniform1f(
+      this.shaderLocations.uniformLocations.uSpotLimit,
       Math.cos(spot.angle * Math.PI / 180)
     );
-  };
-
-  return shader;
+  }
 }

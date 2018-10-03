@@ -40,8 +40,8 @@ export default class Quad {
     this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.mesh.vertices), this.gl.STATIC_DRAW);
     this.mesh.vertexBuffer.itemSize = 2;
     this.mesh.vertexBuffer.numItems = this.mesh.vertices.length / this.mesh.vertexBuffer.itemSize;
-    this.gl.enableVertexAttribArray(this.shader.shaderLocations.attribLocations.vertexPosition);
-    this.gl.vertexAttribPointer(this.shader.shaderLocations.attribLocations.vertexPosition, this.mesh.vertexBuffer.itemSize, this.gl.FLOAT, false, 0, 0);
+    this.gl.enableVertexAttribArray(this.shader.shaderLocations.attribLocations.aVertexPosition);
+    this.gl.vertexAttribPointer(this.shader.shaderLocations.attribLocations.aVertexPosition, this.mesh.vertexBuffer.itemSize, this.gl.FLOAT, false, 0, 0);
 
     this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.mesh.indexBuffer);
     this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.mesh.indices), this.gl.STATIC_DRAW);
@@ -52,8 +52,8 @@ export default class Quad {
     this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.mesh.textures), this.gl.STATIC_DRAW);
     this.mesh.textureBuffer.itemSize = 2;
     this.mesh.textureBuffer.numItems = this.mesh.textures.length / this.mesh.textureBuffer.itemSize;
-    this.gl.enableVertexAttribArray(this.shader.shaderLocations.attribLocations.textureCoord);
-    this.gl.vertexAttribPointer(this.shader.shaderLocations.attribLocations.textureCoord, this.mesh.textureBuffer.itemSize, this.gl.FLOAT, false, 0, 0);
+    this.gl.enableVertexAttribArray(this.shader.shaderLocations.attribLocations.aTextureCoord);
+    this.gl.vertexAttribPointer(this.shader.shaderLocations.attribLocations.aTextureCoord, this.mesh.textureBuffer.itemSize, this.gl.FLOAT, false, 0, 0);
 
     this.gl.bindVertexArray(null);
   }
@@ -62,14 +62,16 @@ export default class Quad {
     this.gl.viewport(0, 0, this.gl.canvas.clientWidth, this.gl.canvas.clientHeight);
     this.gl.enable(this.gl.SCISSOR_TEST);
     this.gl.scissor(0, 0, this.gl.canvas.clientWidth, this.gl.canvas.clientHeight);
-    this.gl.useProgram(this.shader.this.shaderProgram);
+    this.gl.useProgram(this.shader.shaderProgram);
 
     for (let texInd = 0; texInd < this.textures.length; texInd++) {
       let glSlot = 'TEXTURE' + texInd;
-      let uniformLoc = glSlot.toLowerCase();
-      this.gl.activeTexture(this.gl[glSlot]);
-      this.gl.bindTexture(this.gl.TEXTURE_2D, this.textures[texInd]);
-      this.gl.uniform1i(this.shader.shaderLocations.uniformLocations[uniformLoc], texInd);
+      let uniformLoc = 'uT' + glSlot.slice(1).toLowerCase();
+      if (this.shader.hasUniform(uniformLoc)) {
+        this.gl.activeTexture(this.gl[glSlot]);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.textures[texInd]);
+        this.gl.uniform1i(this.shader.shaderLocations.uniformLocations[uniformLoc], texInd);
+      }
     }
 
     this.gl.bindVertexArray(this.mesh.vao);

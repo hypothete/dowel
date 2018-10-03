@@ -22,7 +22,7 @@ export default class Model {
     }
     // TODO: maybe move to method?
     if (this.mesh) {
-      this.mesh.initializeBuffers(shader.shaderLocations);
+      this.mesh.initializeBuffers(shader);
     }
   }
   updateMatrix () {
@@ -62,19 +62,19 @@ export default class Model {
     }
     this.gl.useProgram(shader.shaderProgram);
 
-    this.gl.uniformMatrix4fv(shader.shaderLocations.uniformLocations.projectionMatrix, false, projectionMatrix);
-    this.gl.uniformMatrix4fv(shader.shaderLocations.uniformLocations.modelMatrix, false, modelMatrix);
-    this.gl.uniformMatrix4fv(shader.shaderLocations.uniformLocations.viewMatrix, false, viewMatrix);
+    this.gl.uniformMatrix4fv(shader.shaderLocations.uniformLocations.uProjectionMatrix, false, projectionMatrix);
+    this.gl.uniformMatrix4fv(shader.shaderLocations.uniformLocations.uModelMatrix, false, modelMatrix);
+    this.gl.uniformMatrix4fv(shader.shaderLocations.uniformLocations.uViewMatrix, false, viewMatrix);
 
-    if (typeof shader.shaderLocations.uniformLocations.normalMatrix !== 'undefined') {
+    if (shader.hasUniform('uNormalMatrix')) {
       mat3.normalFromMat4(normalMatrix, modelMatrix);
-      this.gl.uniformMatrix3fv(shader.shaderLocations.uniformLocations.normalMatrix, false, normalMatrix);
+      this.gl.uniformMatrix3fv(shader.shaderLocations.uniformLocations.uNormalMatrix, false, normalMatrix);
     }
 
     for (let texInd = 0; texInd < this.textures.length; texInd++) {
       let glSlot = 'TEXTURE' + texInd;
-      let uniformLoc = glSlot.toLowerCase();
-      if (shader.shaderLocations.uniformLocations[uniformLoc]) {
+      let uniformLoc = 'uT' + glSlot.slice(1).toLowerCase();
+      if (shader.hasUniform(uniformLoc)) {
         this.gl.activeTexture(this.gl[glSlot]);
         this.gl.bindTexture(this.textures[texInd].type, this.textures[texInd]);
         this.gl.uniform1i(shader.shaderLocations.uniformLocations[uniformLoc], texInd);
@@ -82,7 +82,7 @@ export default class Model {
     }
 
     this.gl.bindVertexArray(this.mesh.vao);
-    if (typeof shader.shaderLocations.attribLocations.instanceOffset0 !== 'undefined') {
+    if (shader.hasAttribute('aInstanceOffset0')) {
       this.gl.drawElementsInstanced(this.gl.TRIANGLES, this.mesh.indexBuffer.numItems, this.gl.UNSIGNED_SHORT, 0, this.mesh.offsetBuffer.numItems);
     }
     else {
