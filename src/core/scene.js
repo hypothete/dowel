@@ -1,20 +1,19 @@
 import {quat, mat4, vec3} from '../../node_modules/gl-matrix/src/gl-matrix';
 
-export default function Scene () {
-  const scene = {
-    matrix: mat4.create(),
-    translation: vec3.create(),
-    rotation: vec3.create(),
-    scale: vec3.fromValues(1,1,1),
-    updateMatrix: function () {
-      const rotQuat = quat.fromEuler(quat.create(), scene.rotation[0], scene.rotation[1], scene.rotation[2]);
-      const rotMat = mat4.fromQuat(mat4.create(), rotQuat);
-      mat4.copy(scene.matrix, mat4.create());
-      mat4.translate(scene.matrix, scene.matrix, scene.translation);
-      mat4.multiply(scene.matrix, scene.matrix, rotMat);
-      mat4.scale(scene.matrix, scene.matrix, scene.scale);
-    },
-    children: []
-  };
-  return scene;
+export default class Scene {
+  constructor () {
+    this.children = [];
+    this.matrix = mat4.create();
+    this.translation = vec3.create();
+    this.rotation = vec3.create();
+    this.scale = vec3.fromValues(1,1,1);
+  }
+  updateMatrix () {
+    const rotQuat = quat.fromEuler(quat.create(), this.rotation[0], this.rotation[1], this.rotation[2]);
+    const rotMat = mat4.fromQuat(mat4.create(), rotQuat);
+    mat4.copy(this.matrix, mat4.create());
+    mat4.translate(this.matrix, this.matrix, this.translation);
+    mat4.multiply(this.matrix, this.matrix, rotMat);
+    mat4.scale(this.matrix, this.matrix, this.scale);
+  }
 }

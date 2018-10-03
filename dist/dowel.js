@@ -8,94 +8,97 @@ function setGLContext(context) {
   gl = context;
 }
 
-function Mesh (objMesh) {
-  const gl = getGLContext();
-  let mesh = {
-    side: gl.BACK,
-    vao: gl.createVertexArray(),
-    vertexBuffer: gl.createBuffer(),
-    textureBuffer: gl.createBuffer(),
-    indexBuffer: gl.createBuffer(),
-    normalBuffer: gl.createBuffer(),
-    offsetBuffer: gl.createBuffer(),
-    colorBuffer: gl.createBuffer(),
-    indices: objMesh ? objMesh.indices : [],
-    vertices: objMesh ? objMesh.vertices : [],
-    textures: objMesh ? objMesh.textures : [],  // texture coords
-    normals: objMesh ? objMesh.vertexNormals : [], // vertex normals
-    offsets: [],
-    updateVertices(shaderLocations) {
-      gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vertexBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.vertices), gl.STATIC_DRAW);
-      mesh.vertexBuffer.itemSize = 3;
-      mesh.vertexBuffer.numItems = mesh.vertices.length / mesh.vertexBuffer.itemSize;
-      gl.enableVertexAttribArray(shaderLocations.attribLocations.vertexPosition);
-      gl.vertexAttribPointer(shaderLocations.attribLocations.vertexPosition, mesh.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
-    },
-    updateTextures(shaderLocations) {
-      gl.bindBuffer(gl.ARRAY_BUFFER, mesh.textureBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.textures), gl.STATIC_DRAW);
-      mesh.textureBuffer.itemSize = 2;
-      mesh.textureBuffer.numItems = mesh.textures.length / mesh.textureBuffer.itemSize;
-      gl.enableVertexAttribArray(shaderLocations.attribLocations.textureCoord);
-      gl.vertexAttribPointer(shaderLocations.attribLocations.textureCoord, mesh.textureBuffer.itemSize, gl.FLOAT, false, 0, 0);
-    },
-    updateIndices() {
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, mesh.indexBuffer);
-      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(mesh.indices), gl.STATIC_DRAW);
-      mesh.indexBuffer.itemSize = 1;
-      mesh.indexBuffer.numItems = mesh.indices.length / mesh.indexBuffer.itemSize;
-    },
-    updateNormals(shaderLocations) {
-      gl.bindBuffer(gl.ARRAY_BUFFER, mesh.normalBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.normals), gl.STATIC_DRAW);
-      mesh.normalBuffer.itemSize = 3;
-      mesh.normalBuffer.numItems = mesh.normals.length / mesh.normalBuffer.itemSize;
-      gl.enableVertexAttribArray(shaderLocations.attribLocations.vertexNormal);
-      gl.vertexAttribPointer(shaderLocations.attribLocations.vertexNormal, mesh.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
-    },
-    updateOffsets(shaderLocations) {
-      gl.bindBuffer(gl.ARRAY_BUFFER, mesh.offsetBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.offsets), gl.STATIC_DRAW);
-      mesh.offsetBuffer.itemSize = 4;
-      mesh.offsetBuffer.numItems = mesh.offsets.length / 16;
-      gl.enableVertexAttribArray(shaderLocations.attribLocations.instanceOffset0);
-      gl.vertexAttribPointer(shaderLocations.attribLocations.instanceOffset0, mesh.offsetBuffer.itemSize, gl.FLOAT, false, 16 * 4, 0);
-      gl.vertexAttribDivisor(shaderLocations.attribLocations.instanceOffset0, 1);
+class Mesh {
+  constructor (objMesh) {
+    this.gl = getGLContext();
+    this.side = this.gl.BACK;
+    this.vao = this.gl.createVertexArray();
+    this.vertexBuffer = this.gl.createBuffer();
+    this.textureBuffer = this.gl.createBuffer();
+    this.indexBuffer = this.gl.createBuffer();
+    this.normalBuffer = this.gl.createBuffer();
+    this.offsetBuffer = this.gl.createBuffer();
+    this.colorBuffer = this.gl.createBuffer();
+    this.indices = objMesh ? objMesh.indices : [];
+    this.vertices = objMesh ? objMesh.vertices : [];
+    this.textures = objMesh ? objMesh.textures : [];  // texture coords
+    this.normals = objMesh ? objMesh.vertexNormals : []; // vertex normals
+    this.offsets = [];
+  }
+  updateVertices(shaderLocations) {
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.vertices), this.gl.STATIC_DRAW);
+    this.vertexBuffer.itemSize = 3;
+    this.vertexBuffer.numItems = this.vertices.length / this.vertexBuffer.itemSize;
+    this.gl.enableVertexAttribArray(shaderLocations.attribLocations.vertexPosition);
+    this.gl.vertexAttribPointer(shaderLocations.attribLocations.vertexPosition, this.vertexBuffer.itemSize, this.gl.FLOAT, false, 0, 0);
+  }
 
-      gl.enableVertexAttribArray(shaderLocations.attribLocations.instanceOffset1);
-      gl.vertexAttribPointer(shaderLocations.attribLocations.instanceOffset1, mesh.offsetBuffer.itemSize, gl.FLOAT, false, 16 * 4, 4 * 4);
-      gl.vertexAttribDivisor(shaderLocations.attribLocations.instanceOffset1, 1);
+  updateTextures(shaderLocations) {
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.textureBuffer);
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.textures), this.gl.STATIC_DRAW);
+    this.textureBuffer.itemSize = 2;
+    this.textureBuffer.numItems = this.textures.length / this.textureBuffer.itemSize;
+    this.gl.enableVertexAttribArray(shaderLocations.attribLocations.textureCoord);
+    this.gl.vertexAttribPointer(shaderLocations.attribLocations.textureCoord, this.textureBuffer.itemSize, this.gl.FLOAT, false, 0, 0);
+  }
 
-      gl.enableVertexAttribArray(shaderLocations.attribLocations.instanceOffset2);
-      gl.vertexAttribPointer(shaderLocations.attribLocations.instanceOffset2, mesh.offsetBuffer.itemSize, gl.FLOAT, false, 16 * 4, 8 * 4);
-      gl.vertexAttribDivisor(shaderLocations.attribLocations.instanceOffset2, 1);
+  updateIndices() {
+    this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+    this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.indices), this.gl.STATIC_DRAW);
+    this.indexBuffer.itemSize = 1;
+    this.indexBuffer.numItems = this.indices.length / this.indexBuffer.itemSize;
+  }
 
-      gl.enableVertexAttribArray(shaderLocations.attribLocations.instanceOffset3);
-      gl.vertexAttribPointer(shaderLocations.attribLocations.instanceOffset3, mesh.offsetBuffer.itemSize, gl.FLOAT, false, 16 * 4, 12 * 4);
-      gl.vertexAttribDivisor(shaderLocations.attribLocations.instanceOffset3, 1);
-    },
-    initializeBuffers (shaderLocations) {
-      gl.bindVertexArray(mesh.vao);
-      mesh.updateVertices(shaderLocations);
-      if (typeof shaderLocations.attribLocations.textureCoord !== 'undefined' &&
-        shaderLocations.attribLocations.textureCoord > -1) {
-        mesh.updateTextures(shaderLocations);
-      }
-      mesh.updateIndices(shaderLocations);
-      if (typeof shaderLocations.attribLocations.vertexNormal !== 'undefined' &&
-        shaderLocations.attribLocations.vertexNormal > -1) {
-        mesh.updateNormals(shaderLocations);
-      }
-      if (typeof shaderLocations.attribLocations.instanceOffset0 !== 'undefined' &&
-        shaderLocations.attribLocations.instanceOffset0 > -1) {
-        mesh.updateOffsets(shaderLocations);
-      }
-      gl.bindVertexArray(null);
+  updateNormals(shaderLocations) {
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.normalBuffer);
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.normals), this.gl.STATIC_DRAW);
+    this.normalBuffer.itemSize = 3;
+    this.normalBuffer.numItems = this.normals.length / this.normalBuffer.itemSize;
+    this.gl.enableVertexAttribArray(shaderLocations.attribLocations.vertexNormal);
+    this.gl.vertexAttribPointer(shaderLocations.attribLocations.vertexNormal, this.normalBuffer.itemSize, this.gl.FLOAT, false, 0, 0);
+  }
+
+  updateOffsets(shaderLocations) {
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.offsetBuffer);
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.offsets), this.gl.STATIC_DRAW);
+    this.offsetBuffer.itemSize = 4;
+    this.offsetBuffer.numItems = this.offsets.length / 16;
+    this.gl.enableVertexAttribArray(shaderLocations.attribLocations.instanceOffset0);
+    this.gl.vertexAttribPointer(shaderLocations.attribLocations.instanceOffset0, this.offsetBuffer.itemSize, this.gl.FLOAT, false, 16 * 4, 0);
+    this.gl.vertexAttribDivisor(shaderLocations.attribLocations.instanceOffset0, 1);
+
+    this.gl.enableVertexAttribArray(shaderLocations.attribLocations.instanceOffset1);
+    this.gl.vertexAttribPointer(shaderLocations.attribLocations.instanceOffset1, this.offsetBuffer.itemSize, this.gl.FLOAT, false, 16 * 4, 4 * 4);
+    this.gl.vertexAttribDivisor(shaderLocations.attribLocations.instanceOffset1, 1);
+
+    this.gl.enableVertexAttribArray(shaderLocations.attribLocations.instanceOffset2);
+    this.gl.vertexAttribPointer(shaderLocations.attribLocations.instanceOffset2, this.offsetBuffer.itemSize, this.gl.FLOAT, false, 16 * 4, 8 * 4);
+    this.gl.vertexAttribDivisor(shaderLocations.attribLocations.instanceOffset2, 1);
+
+    this.gl.enableVertexAttribArray(shaderLocations.attribLocations.instanceOffset3);
+    this.gl.vertexAttribPointer(shaderLocations.attribLocations.instanceOffset3, this.offsetBuffer.itemSize, this.gl.FLOAT, false, 16 * 4, 12 * 4);
+    this.gl.vertexAttribDivisor(shaderLocations.attribLocations.instanceOffset3, 1);
+  }
+
+  initializeBuffers (shaderLocations) {
+    this.gl.bindVertexArray(this.vao);
+    this.updateVertices(shaderLocations);
+    if (typeof shaderLocations.attribLocations.textureCoord !== 'undefined' &&
+      shaderLocations.attribLocations.textureCoord > -1) {
+      this.updateTextures(shaderLocations);
     }
-  };
-
-  return mesh;
+    this.updateIndices(shaderLocations);
+    if (typeof shaderLocations.attribLocations.vertexNormal !== 'undefined' &&
+      shaderLocations.attribLocations.vertexNormal > -1) {
+      this.updateNormals(shaderLocations);
+    }
+    if (typeof shaderLocations.attribLocations.instanceOffset0 !== 'undefined' &&
+      shaderLocations.attribLocations.instanceOffset0 > -1) {
+      this.updateOffsets(shaderLocations);
+    }
+    this.gl.bindVertexArray(null);
+  }
 }
 
 /**
@@ -3725,219 +3728,228 @@ const viewMatrix = create$3();
 const projectionMatrix = create$3();
 const normalMatrix = create$2();
 
-function Model (name, mesh, parent, shader) {
-  const gl = getGLContext();
-  const model = {
-    name,
-    mesh,
-    shader,
-    textures: [],
-    parent,
-    children: [],
-    matrix: create$3(),
-    translation: create$4(),
-    rotation: create$4(),
-    scale: fromValues$4(1,1,1),
-    updateMatrix: function () {
-      const rotQuat = fromEuler(create$6(), model.rotation[0], model.rotation[1], model.rotation[2]);
-      const rotMat = fromQuat$1(create$3(), rotQuat);
-      copy$3(model.matrix, create$3());
-      translate$2(model.matrix, model.matrix, model.translation);
-      multiply$3(model.matrix, model.matrix, rotMat);
-      scale$3(model.matrix, model.matrix, model.scale);
-    },
-    draw: function (overrideShader) {
-      model.updateMatrix();
-      let parentModelMatrix = matrixStack[matrixStack.length - 1];
-      let modelMatrix = multiply$3(create$3(), parentModelMatrix, model.matrix);
-      matrixStack.push(modelMatrix);
+class Model {
+  constructor (name, mesh, parent, shader) {
+    this.gl = getGLContext();
+    this.name = name;
+    this.mesh = mesh;
+    this.shader = shader;
+    this.textures = [];
+    this.parent = parent;
+    this.children = [];
+    this.matrix = create$3();
+    this.translation = create$4();
+    this.rotation = create$4();
+    this.scale = fromValues$4(1,1,1);
 
-      for (let child of model.children) {
-        child.draw(overrideShader);
-      }
-
-      matrixStack.pop();
-
-      if (typeof model.mesh === 'undefined' || model.mesh == null) {
-        return;
-      }
-
-      gl.cullFace(model.mesh.side || gl.BACK);
-
-      let shader;
-
-      if (overrideShader) {
-        shader = overrideShader;
-      }
-      else {
-        shader = model.shader;
-      }
-      gl.useProgram(shader.shaderProgram);
-
-      gl.uniformMatrix4fv(shader.shaderLocations.uniformLocations.projectionMatrix, false, projectionMatrix);
-      gl.uniformMatrix4fv(shader.shaderLocations.uniformLocations.modelMatrix, false, modelMatrix);
-      gl.uniformMatrix4fv(shader.shaderLocations.uniformLocations.viewMatrix, false, viewMatrix);
-
-      if (typeof shader.shaderLocations.uniformLocations.normalMatrix !== 'undefined') {
-        normalFromMat4(normalMatrix, modelMatrix);
-        gl.uniformMatrix3fv(shader.shaderLocations.uniformLocations.normalMatrix, false, normalMatrix);
-      }
-
-      for (let texInd = 0; texInd < model.textures.length; texInd++) {
-        let glSlot = 'TEXTURE' + texInd;
-        let uniformLoc = glSlot.toLowerCase();
-        if (shader.shaderLocations.uniformLocations[uniformLoc]) {
-          gl.activeTexture(gl[glSlot]);
-          gl.bindTexture(model.textures[texInd].type, model.textures[texInd]);
-          gl.uniform1i(shader.shaderLocations.uniformLocations[uniformLoc], texInd);
-        }
-      }
-
-      gl.bindVertexArray(model.mesh.vao);
-      if (typeof shader.shaderLocations.attribLocations.instanceOffset0 !== 'undefined') {
-        gl.drawElementsInstanced(gl.TRIANGLES, model.mesh.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0, model.mesh.offsetBuffer.numItems);
-      }
-      else {
-        gl.drawElements(gl.TRIANGLES, model.mesh.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
-      }
-      gl.bindVertexArray(null);
+    // TODO: consider revising this. not obvious
+    if (parent && parent.children) {
+      parent.children.push(this);
     }
-  };
-  if (parent && parent.children) {
-    parent.children.push(model);
+    // TODO: maybe move to method?
+    if (this.mesh) {
+      this.mesh.initializeBuffers(shader.shaderLocations);
+    }
   }
-  if (model.mesh) {
-    model.mesh.initializeBuffers(shader.shaderLocations);
+  updateMatrix () {
+    const rotQuat = fromEuler(create$6(), this.rotation[0], this.rotation[1], this.rotation[2]);
+    const rotMat = fromQuat$1(create$3(), rotQuat);
+    copy$3(this.matrix, create$3());
+    translate$2(this.matrix, this.matrix, this.translation);
+    multiply$3(this.matrix, this.matrix, rotMat);
+    scale$3(this.matrix, this.matrix, this.scale);
   }
-  return model;
-}
 
-function Scene () {
-  const scene = {
-    matrix: create$3(),
-    translation: create$4(),
-    rotation: create$4(),
-    scale: fromValues$4(1,1,1),
-    updateMatrix: function () {
-      const rotQuat = fromEuler(create$6(), scene.rotation[0], scene.rotation[1], scene.rotation[2]);
-      const rotMat = fromQuat$1(create$3(), rotQuat);
-      copy$3(scene.matrix, create$3());
-      translate$2(scene.matrix, scene.matrix, scene.translation);
-      multiply$3(scene.matrix, scene.matrix, rotMat);
-      scale$3(scene.matrix, scene.matrix, scene.scale);
-    },
-    children: []
-  };
-  return scene;
-}
+  draw (overrideShader) {
+    this.updateMatrix();
+    let parentModelMatrix = matrixStack[matrixStack.length - 1];
+    let modelMatrix = multiply$3(create$3(), parentModelMatrix, this.matrix);
+    matrixStack.push(modelMatrix);
 
-function Camera (name, fov, aspect, near, far, viewport) {
-  const gl = getGLContext();
-  const cam = {
-    name,
-    fov,
-    aspect,
-    near,
-    far,
-    viewport,
-    matrix: create$3(),
-    translation: create$4(),
-    rotation: create$4(),
-    updateMatrix () {
-      const rotQuat = fromEuler(create$6(), cam.rotation[0], cam.rotation[1], cam.rotation[2]);
-      const rotMat = fromQuat$1(create$3(), rotQuat);
-      copy$3(cam.matrix, create$3());
-      translate$2(cam.matrix, cam.matrix, cam.translation);
-      multiply$3(cam.matrix, cam.matrix, rotMat);
-    },
-    getProjection() {
-      return perspective(create$3(), cam.fov * Math.PI / 180, cam.aspect, cam.near, cam.far);
-    },
-    render (scene, parent, overrideShader) {
-      cam.updateMatrix();
-      if (parent) {
-        multiply$3(cam.matrix, parent.matrix, cam.matrix);
-      }
-
-      gl.viewport(cam.viewport.x, cam.viewport.y, cam.viewport.w, cam.viewport.h);
-      gl.enable(gl.SCISSOR_TEST);
-      gl.scissor(cam.viewport.x, cam.viewport.y, cam.viewport.w, cam.viewport.h);
-      invert$3(viewMatrix, cam.matrix);
-      copy$3(projectionMatrix, cam.getProjection());
-
-      matrixStack.length = 0;
-      matrixStack.push(scene.matrix);
-
-      for (let child of scene.children) {
-        child.draw(overrideShader);
-      }
-
-      matrixStack.pop();
-
-      gl.disable(gl.SCISSOR_TEST);
+    for (let child of this.children) {
+      child.draw(overrideShader);
     }
-  };
-  return cam;
-}
 
-function OrthographicCamera (name, left, right, bottom, top, near, far, viewport) {
-  const gl = getGLContext();
-  const cam = {
-    name,
-    left, right, bottom, top,
-    near,
-    far,
-    viewport,
-    matrix: create$3(),
-    translation: create$4(),
-    rotation: create$4(),
-    updateMatrix () {
-      const rotQuat = fromEuler(create$6(), cam.rotation[0], cam.rotation[1], cam.rotation[2]);
-      const rotMat = fromQuat$1(create$3(), rotQuat);
-      copy$3(cam.matrix, create$3());
-      translate$2(cam.matrix, cam.matrix, cam.translation);
-      multiply$3(cam.matrix, cam.matrix, rotMat);
-    },
-    getProjection () {
-      return ortho(create$3(), cam.left, cam.right, cam.bottom, cam.top, cam.near, cam.far);
-    },
-    render (scene, parent, overrideShader) {
-      cam.updateMatrix();
-      if (parent) {
-        multiply$3(cam.matrix, parent.matrix, cam.matrix);
-      }
+    matrixStack.pop();
 
-      gl.viewport(cam.viewport.x, cam.viewport.y, cam.viewport.w, cam.viewport.h);
-      gl.enable(gl.SCISSOR_TEST);
-      gl.scissor(cam.viewport.x, cam.viewport.y, cam.viewport.w, cam.viewport.h);
-      invert$3(viewMatrix, cam.matrix);
-      copy$3(projectionMatrix, cam.getProjection());
-
-      matrixStack.length = 0;
-      matrixStack.push(scene.matrix);
-
-      for (let child of scene.children) {
-        child.draw(overrideShader);
-      }
-
-      matrixStack.pop();
-
-      gl.disable(gl.SCISSOR_TEST);
+    if (typeof this.mesh === 'undefined' || this.mesh == null) {
+      return;
     }
-  };
-  return cam;
+
+    this.gl.cullFace(this.mesh.side || this.gl.BACK);
+
+    let shader;
+
+    if (overrideShader) {
+      shader = overrideShader;
+    }
+    else {
+      shader = this.shader;
+    }
+    this.gl.useProgram(shader.shaderProgram);
+
+    this.gl.uniformMatrix4fv(shader.shaderLocations.uniformLocations.projectionMatrix, false, projectionMatrix);
+    this.gl.uniformMatrix4fv(shader.shaderLocations.uniformLocations.modelMatrix, false, modelMatrix);
+    this.gl.uniformMatrix4fv(shader.shaderLocations.uniformLocations.viewMatrix, false, viewMatrix);
+
+    if (typeof shader.shaderLocations.uniformLocations.normalMatrix !== 'undefined') {
+      normalFromMat4(normalMatrix, modelMatrix);
+      this.gl.uniformMatrix3fv(shader.shaderLocations.uniformLocations.normalMatrix, false, normalMatrix);
+    }
+
+    for (let texInd = 0; texInd < this.textures.length; texInd++) {
+      let glSlot = 'TEXTURE' + texInd;
+      let uniformLoc = glSlot.toLowerCase();
+      if (shader.shaderLocations.uniformLocations[uniformLoc]) {
+        this.gl.activeTexture(this.gl[glSlot]);
+        this.gl.bindTexture(this.textures[texInd].type, this.textures[texInd]);
+        this.gl.uniform1i(shader.shaderLocations.uniformLocations[uniformLoc], texInd);
+      }
+    }
+
+    this.gl.bindVertexArray(this.mesh.vao);
+    if (typeof shader.shaderLocations.attribLocations.instanceOffset0 !== 'undefined') {
+      this.gl.drawElementsInstanced(this.gl.TRIANGLES, this.mesh.indexBuffer.numItems, this.gl.UNSIGNED_SHORT, 0, this.mesh.offsetBuffer.numItems);
+    }
+    else {
+      this.gl.drawElements(this.gl.TRIANGLES, this.mesh.indexBuffer.numItems, this.gl.UNSIGNED_SHORT, 0);
+    }
+    this.gl.bindVertexArray(null);
+  }
 }
 
-function Quad (name, shader) {
-  const gl = getGLContext();
-  const quad = {
-    name,
-    shader,
-    mesh: {
-      vertexBuffer: gl.createBuffer(),
-      textureBuffer: gl.createBuffer(),
-      indexBuffer: gl.createBuffer(),
-      vao: gl.createVertexArray(),
+class Scene {
+  constructor () {
+    this.children = [];
+    this.matrix = create$3();
+    this.translation = create$4();
+    this.rotation = create$4();
+    this.scale = fromValues$4(1,1,1);
+  }
+  updateMatrix () {
+    const rotQuat = fromEuler(create$6(), this.rotation[0], this.rotation[1], this.rotation[2]);
+    const rotMat = fromQuat$1(create$3(), rotQuat);
+    copy$3(this.matrix, create$3());
+    translate$2(this.matrix, this.matrix, this.translation);
+    multiply$3(this.matrix, this.matrix, rotMat);
+    scale$3(this.matrix, this.matrix, this.scale);
+  }
+}
+
+class Camera {
+  constructor (name, fov, aspect, near, far, viewport) {
+    this.gl = getGLContext();
+    this.name = name;
+    this.fov = fov;
+    this.aspect = aspect;
+    this.near = near;
+    this.far = far;
+    this.viewport = viewport;
+    this.matrix = create$3();
+    this.translation = create$4();
+    this.rotation = create$4();
+  }
+
+  updateMatrix () {
+    const rotQuat = fromEuler(create$6(), this.rotation[0], this.rotation[1], this.rotation[2]);
+    const rotMat = fromQuat$1(create$3(), rotQuat);
+    copy$3(this.matrix, create$3());
+    translate$2(this.matrix, this.matrix, this.translation);
+    multiply$3(this.matrix, this.matrix, rotMat);
+  }
+
+  getProjection() {
+    return perspective(create$3(), this.fov * Math.PI / 180, this.aspect, this.near, this.far);
+  }
+
+  render (scene, parent, overrideShader) {
+    this.updateMatrix();
+    if (parent) {
+      multiply$3(this.matrix, parent.matrix, this.matrix);
+    }
+
+    this.gl.viewport(this.viewport.x, this.viewport.y, this.viewport.w, this.viewport.h);
+    this.gl.enable(this.gl.SCISSOR_TEST);
+    this.gl.scissor(this.viewport.x, this.viewport.y, this.viewport.w, this.viewport.h);
+    invert$3(viewMatrix, this.matrix);
+    copy$3(projectionMatrix, this.getProjection());
+
+    matrixStack.length = 0;
+    matrixStack.push(scene.matrix);
+
+    for (let child of scene.children) {
+      child.draw(overrideShader);
+    }
+
+    matrixStack.pop();
+
+    this.gl.disable(this.gl.SCISSOR_TEST);
+  }
+}
+
+class OrthographicCamera {
+  constructor (name, left, right, bottom, top, near, far, viewport) {
+    this.gl = getGLContext();
+    this.name = name;
+    this.left = left;
+    this.right = right;
+    this.bottom = bottom;
+    this.top = top;
+    this.near = near;
+    this.far = far;
+    this.viewport = viewport;
+    this.matrix = create$3();
+    this.translation = create$4();
+    this.rotation = create$4();
+  }
+
+  updateMatrix () {
+    const rotQuat = fromEuler(create$6(), this.rotation[0], this.rotation[1], this.rotation[2]);
+    const rotMat = fromQuat$1(create$3(), rotQuat);
+    copy$3(this.matrix, create$3());
+    translate$2(this.matrix, this.matrix, this.translation);
+    multiply$3(this.matrix, this.matrix, rotMat);
+  }
+
+  getProjection () {
+    return ortho(create$3(), this.left, this.right, this.bottom, this.top, this.near, this.far);
+  }
+
+  render (scene, parent, overrideShader) {
+    this.updateMatrix();
+    if (parent) {
+      multiply$3(this.matrix, parent.matrix, this.matrix);
+    }
+
+    this.gl.viewport(this.viewport.x, this.viewport.y, this.viewport.w, this.viewport.h);
+    this.gl.enable(this.gl.SCISSOR_TEST);
+    this.gl.scissor(this.viewport.x, this.viewport.y, this.viewport.w, this.viewport.h);
+    invert$3(viewMatrix, this.matrix);
+    copy$3(projectionMatrix, this.getProjection());
+
+    matrixStack.length = 0;
+    matrixStack.push(scene.matrix);
+
+    for (let child of scene.children) {
+      child.draw(overrideShader);
+    }
+
+    matrixStack.pop();
+
+    this.gl.disable(this.gl.SCISSOR_TEST);
+  }
+}
+
+class Quad {
+  constructor (name, shader) {
+    this.gl = getGLContext();
+    this.name = name;
+    this.shader = shader;
+    this.mesh = {
+      vertexBuffer: this.gl.createBuffer(),
+      textureBuffer: this.gl.createBuffer(),
+      indexBuffer: this.gl.createBuffer(),
+      vao: this.gl.createVertexArray(),
       vertices: [
         1.0,  1.0,
         -1.0,  1.0,
@@ -3954,52 +3966,56 @@ function Quad (name, shader) {
         0, 1, 2,
         0, 2, 3
       ]
-    },
-    textures: [],
-    draw: function () {
-      gl.viewport(0, 0, gl.canvas.clientWidth, gl.canvas.clientHeight);
-      gl.enable(gl.SCISSOR_TEST);
-      gl.scissor(0, 0, gl.canvas.clientWidth, gl.canvas.clientHeight);
-      gl.useProgram(shader.shaderProgram);
+    };
+    this.textures = [];
 
-      for (let texInd = 0; texInd < quad.textures.length; texInd++) {
-        let glSlot = 'TEXTURE' + texInd;
-        let uniformLoc = glSlot.toLowerCase();
-        gl.activeTexture(gl[glSlot]);
-        gl.bindTexture(gl.TEXTURE_2D, quad.textures[texInd]);
-        gl.uniform1i(shader.shaderLocations.uniformLocations[uniformLoc], texInd);
-      }
+    this.initializeVAO();
 
-      gl.bindVertexArray(quad.mesh.vao);
-      gl.drawElements(gl.TRIANGLES, quad.mesh.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
-      gl.bindVertexArray(null);
+  }
+
+  initializeVAO () {
+    this.gl.bindVertexArray(this.mesh.vao);
+
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.mesh.vertexBuffer);
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.mesh.vertices), this.gl.STATIC_DRAW);
+    this.mesh.vertexBuffer.itemSize = 2;
+    this.mesh.vertexBuffer.numItems = this.mesh.vertices.length / this.mesh.vertexBuffer.itemSize;
+    this.gl.enableVertexAttribArray(this.shader.shaderLocations.attribLocations.vertexPosition);
+    this.gl.vertexAttribPointer(this.shader.shaderLocations.attribLocations.vertexPosition, this.mesh.vertexBuffer.itemSize, this.gl.FLOAT, false, 0, 0);
+
+    this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.mesh.indexBuffer);
+    this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.mesh.indices), this.gl.STATIC_DRAW);
+    this.mesh.indexBuffer.itemSize = 1;
+    this.mesh.indexBuffer.numItems = this.mesh.indices.length;
+
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.mesh.textureBuffer);
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.mesh.textures), this.gl.STATIC_DRAW);
+    this.mesh.textureBuffer.itemSize = 2;
+    this.mesh.textureBuffer.numItems = this.mesh.textures.length / this.mesh.textureBuffer.itemSize;
+    this.gl.enableVertexAttribArray(this.shader.shaderLocations.attribLocations.textureCoord);
+    this.gl.vertexAttribPointer(this.shader.shaderLocations.attribLocations.textureCoord, this.mesh.textureBuffer.itemSize, this.gl.FLOAT, false, 0, 0);
+
+    this.gl.bindVertexArray(null);
+  }
+
+  draw () {
+    this.gl.viewport(0, 0, this.gl.canvas.clientWidth, this.gl.canvas.clientHeight);
+    this.gl.enable(this.gl.SCISSOR_TEST);
+    this.gl.scissor(0, 0, this.gl.canvas.clientWidth, this.gl.canvas.clientHeight);
+    this.gl.useProgram(this.shader.this.shaderProgram);
+
+    for (let texInd = 0; texInd < this.textures.length; texInd++) {
+      let glSlot = 'TEXTURE' + texInd;
+      let uniformLoc = glSlot.toLowerCase();
+      this.gl.activeTexture(this.gl[glSlot]);
+      this.gl.bindTexture(this.gl.TEXTURE_2D, this.textures[texInd]);
+      this.gl.uniform1i(this.shader.shaderLocations.uniformLocations[uniformLoc], texInd);
     }
-  };
 
-  gl.bindVertexArray(quad.mesh.vao);
-
-  gl.bindBuffer(gl.ARRAY_BUFFER, quad.mesh.vertexBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(quad.mesh.vertices), gl.STATIC_DRAW);
-  quad.mesh.vertexBuffer.itemSize = 2;
-  quad.mesh.vertexBuffer.numItems = quad.mesh.vertices.length / quad.mesh.vertexBuffer.itemSize;
-  gl.enableVertexAttribArray(shader.shaderLocations.attribLocations.vertexPosition);
-  gl.vertexAttribPointer(shader.shaderLocations.attribLocations.vertexPosition, quad.mesh.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, quad.mesh.indexBuffer);
-  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(quad.mesh.indices), gl.STATIC_DRAW);
-  quad.mesh.indexBuffer.itemSize = 1;
-  quad.mesh.indexBuffer.numItems = quad.mesh.indices.length;
-
-  gl.bindBuffer(gl.ARRAY_BUFFER, quad.mesh.textureBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(quad.mesh.textures), gl.STATIC_DRAW);
-  quad.mesh.textureBuffer.itemSize = 2;
-  quad.mesh.textureBuffer.numItems = quad.mesh.textures.length / quad.mesh.textureBuffer.itemSize;
-  gl.enableVertexAttribArray(shader.shaderLocations.attribLocations.textureCoord);
-  gl.vertexAttribPointer(shader.shaderLocations.attribLocations.textureCoord, quad.mesh.textureBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-  gl.bindVertexArray(null);
-
-  return quad;
+    this.gl.bindVertexArray(this.mesh.vao);
+    this.gl.drawElements(this.gl.TRIANGLES, this.mesh.indexBuffer.numItems, this.gl.UNSIGNED_SHORT, 0);
+    this.gl.bindVertexArray(null);
+  }
 }
 
 function initShaderProgram(vsSource, fsSource) {
@@ -4037,12 +4053,14 @@ function loadShader(type, source) {
   return shader;
 }
 
-function Shader(vert, frag) {
-  this.shaderProgram = initShaderProgram(vert, frag);
-  this.shaderLocations = {
-    attribLocations: {},
-    uniformLocations: {}
-  };
+class shader {
+  constructor (vert, frag) {
+    this.shaderProgram = initShaderProgram(vert, frag);
+    this.shaderLocations = {
+      attribLocations: {},
+      uniformLocations: {}
+    };
+  }
 }
 
 function loadTexture (url) {
@@ -5154,264 +5172,242 @@ async function loadMesh (url) {
   return new Mesh(new Mesh$1(objData));
 }
 
-function BoxMesh (w, h, d) {
-  let mesh = new Mesh();
+class BoxMesh extends Mesh {
+  constructor (w, h, d) {
+    super();
 
-  let wl = w / 2;
-  let hl = h / 2;
-  let dl = d / 2;
+    const wl = w / 2;
+    const hl = h / 2;
+    const dl = d / 2;
 
-  mesh.vertices = [
-    // +x
-    wl,  hl,  dl,
-    wl,  hl, -dl,
-    wl, -hl, -dl,
-    wl, -hl,  dl,
+    this.vertices = [
+      // +x
+      wl,  hl,  dl,
+      wl,  hl, -dl,
+      wl, -hl, -dl,
+      wl, -hl,  dl,
 
-    // -x
-    -wl,  hl, -dl,
-    -wl,  hl,  dl,
-    -wl, -hl,  dl,
-    -wl, -hl, -dl,
+      // -x
+      -wl,  hl, -dl,
+      -wl,  hl,  dl,
+      -wl, -hl,  dl,
+      -wl, -hl, -dl,
 
-    // +y
-    -wl,  hl, -dl,
-    wl,  hl, -dl,
-    wl,  hl,  dl,
-    -wl,  hl,  dl,
+      // +y
+      -wl,  hl, -dl,
+      wl,  hl, -dl,
+      wl,  hl,  dl,
+      -wl,  hl,  dl,
 
-    // -y
-    wl, -hl, -dl,
-    -wl, -hl, -dl,
-    -wl, -hl, dl,
-    wl, -hl, dl,
+      // -y
+      wl, -hl, -dl,
+      -wl, -hl, -dl,
+      -wl, -hl, dl,
+      wl, -hl, dl,
 
-    // +z
-    -wl,  hl,  dl,
-    wl,  hl,  dl,
-    wl, -hl,  dl,
-    -wl, -hl,  dl,
+      // +z
+      -wl,  hl,  dl,
+      wl,  hl,  dl,
+      wl, -hl,  dl,
+      -wl, -hl,  dl,
 
-    // -z
-    wl,  hl, -dl,
-    -wl,  hl, -dl,
-    -wl, -hl, -dl,
-    wl, -hl, -dl
-  ];
+      // -z
+      wl,  hl, -dl,
+      -wl,  hl, -dl,
+      -wl, -hl, -dl,
+      wl, -hl, -dl
+    ];
 
-  mesh.textures = [
+    this.textures = [
 
-    // +x
-    0.5, 0.667,
-    0.75, 0.667,
-    0.75, 0.334,
-    0.5, 0.334,
+      // +x
+      0.5, 0.667,
+      0.75, 0.667,
+      0.75, 0.334,
+      0.5, 0.334,
 
-    // -x
-    0, 0.667,
-    0.25, 0.667,
-    0.25, 0.334,
-    0, 0.33,
+      // -x
+      0, 0.667,
+      0.25, 0.667,
+      0.25, 0.334,
+      0, 0.33,
 
-    // +y
-    0.25, 1.0,
-    0.5, 1.0,
-    0.5, 0.667,
-    0.25, 0.667,
+      // +y
+      0.25, 1.0,
+      0.5, 1.0,
+      0.5, 0.667,
+      0.25, 0.667,
 
-    // -y
-    0.25, 0.334,
-    0.5, 0.334,
-    0.5, 0,
-    0.25, 0,
+      // -y
+      0.25, 0.334,
+      0.5, 0.334,
+      0.5, 0,
+      0.25, 0,
 
-    // +z
-    0.25, 0.667,
-    0.5, 0.667,
-    0.5, 0.334,
-    0.25, 0.334,
+      // +z
+      0.25, 0.667,
+      0.5, 0.667,
+      0.5, 0.334,
+      0.25, 0.334,
 
-    // -z
-    0.75, 0.667,
-    1.0, 0.667,
-    1.0, 0.334,
-    0.75, 0.334,
-  ];
+      // -z
+      0.75, 0.667,
+      1.0, 0.667,
+      1.0, 0.334,
+      0.75, 0.334,
+    ];
 
-  mesh.indices = [
-    // +x
-    1, 0, 2,
-    0, 3, 2,
+    this.indices = [
+      // +x
+      1, 0, 2,
+      0, 3, 2,
 
-    // -x
-    5, 4, 6,
-    4, 7, 6,
+      // -x
+      5, 4, 6,
+      4, 7, 6,
 
-    // +y
-    9, 8, 10,
-    8, 11, 10,
+      // +y
+      9, 8, 10,
+      8, 11, 10,
 
-    // -y
-    13, 12, 14,
-    12, 15, 14,
+      // -y
+      13, 12, 14,
+      12, 15, 14,
 
-    // +z
-    17, 16, 18,
-    16, 19, 18,
+      // +z
+      17, 16, 18,
+      16, 19, 18,
 
-    // -z
-    21, 20, 22,
-    20, 23, 22
-  ];
+      // -z
+      21, 20, 22,
+      20, 23, 22
+    ];
 
-  mesh.normals = [
-    // +x
-    1, 0, 0,
-    1, 0, 0,
-    1, 0, 0,
-    1, 0, 0,
+    this.normals = [
+      // +x
+      1, 0, 0,
+      1, 0, 0,
+      1, 0, 0,
+      1, 0, 0,
 
-    // -x
-    -1, 0, 0,
-    -1, 0, 0,
-    -1, 0, 0,
-    -1, 0, 0,
+      // -x
+      -1, 0, 0,
+      -1, 0, 0,
+      -1, 0, 0,
+      -1, 0, 0,
 
-    // +y
-    0, 1, 0,
-    0, 1, 0,
-    0, 1, 0,
-    0, 1, 0,
+      // +y
+      0, 1, 0,
+      0, 1, 0,
+      0, 1, 0,
+      0, 1, 0,
 
-    // -y
-    0, -1, 0,
-    0, -1, 0,
-    0, -1, 0,
-    0, -1, 0,
+      // -y
+      0, -1, 0,
+      0, -1, 0,
+      0, -1, 0,
+      0, -1, 0,
 
-    // +z
-    0, 0, 1,
-    0, 0, 1,
-    0, 0, 1,
-    0, 0, 1,
+      // +z
+      0, 0, 1,
+      0, 0, 1,
+      0, 0, 1,
+      0, 0, 1,
 
-    // -z
-    0, 0, -1,
-    0, 0, -1,
-    0, 0, -1,
-    0, 0, -1,
-  ];
-
-  return mesh;
+      // -z
+      0, 0, -1,
+      0, 0, -1,
+      0, 0, -1,
+      0, 0, -1,
+    ];
+  }
 }
 
-function PlaneMesh (w, h, dw, dh) {
-  let mesh = new Mesh();
+class PlaneMesh extends Mesh {
+  constructor (w, h, dw, dh) {
+    super();
+    const qw = w / dw; //quad width
+    const qh = h / dh;
 
-  let qw = w / dw; //quad width
-  let qh = h / dh;
+    const hw = w / 2; //half side for centering
+    const hh = h / 2;
 
-  let hw = w / 2; //half side for centering
-  let hh = h / 2;
+    let dn = 0;
 
-  let dn = 0;
-  for (let j = 0; j < dh + 1; j++) {
-    for (let i = 0; i < dw + 1; i++) {
-      let dx = i * qw - hw;
-      let dy = j * qh - hh;
-      mesh.vertices.push(dx, dy, 0.0);
-      mesh.textures.push(i / dw, j / dh);
-      mesh.normals.push(0.0, 0.0, 1.0);
-      if (j < dh) {
-        if (i < dw) {
-          mesh.indices.push(dn, dn + 1, dn + (dw + 1));
+    for (let j = 0; j < dh + 1; j++) {
+      for (let i = 0; i < dw + 1; i++) {
+        let dx = i * qw - hw;
+        let dy = j * qh - hh;
+        this.vertices.push(dx, dy, 0.0);
+        this.textures.push(i / dw, j / dh);
+        this.normals.push(0.0, 0.0, 1.0);
+        if (j < dh) {
+          if (i < dw) {
+            this.indices.push(dn, dn + 1, dn + (dw + 1));
+          }
+          if (i > 0) {
+            this.indices.push(dn, dn + (dw + 1), dn + dw);
+          }
         }
-        if (i > 0) {
-          mesh.indices.push(dn, dn + (dw + 1), dn + dw);
-        }
+
+        dn++;
       }
-
-      dn++;
     }
   }
-
-  return mesh;
 }
 
-function SphereMesh (r, dr, dh) {
-  let mesh = new Mesh();
+class SphereMesh extends Mesh {
+  constructor (r, dr, dh) {
+    super();
+    let dn = 0;
+    for (let j = 0; j < dh + 1; j++) {
+      for (let i = 0; i < dr + 1; i++) {
+        let angle$$1 = -2 * Math.PI * i / dr;
+        let dy = -Math.cos(Math.PI * j / dh) * r;
+        let rr = Math.sin(Math.PI * j / dh) * r;
+        let dx = Math.cos(angle$$1) * rr;
+        let dz = Math.sin(angle$$1) * rr;
 
-  let dn = 0;
-  for (let j = 0; j < dh + 1; j++) {
-    for (let i = 0; i < dr + 1; i++) {
-      let angle$$1 = -2 * Math.PI * i / dr;
-      let dy = -Math.cos(Math.PI * j / dh) * r;
-      let rr = Math.sin(Math.PI * j / dh) * r;
-      let dx = Math.cos(angle$$1) * rr;
-      let dz = Math.sin(angle$$1) * rr;
+        this.vertices.push(dx, dy, dz);
+        this.textures.push(i / dr, j / dh);
 
-      mesh.vertices.push(dx, dy, dz);
-      mesh.textures.push(i / dr, j / dh);
+        let vNorm = normalize(create$4(), fromValues$4(dx, dy, dz));
+        this.normals.push(vNorm[0], vNorm[1], vNorm[2]);
 
-      let vNorm = normalize(create$4(), fromValues$4(dx, dy, dz));
-      mesh.normals.push(vNorm[0], vNorm[1], vNorm[2]);
-
-      if (j < dh) {
-        if (i < dr) {
-          mesh.indices.push(dn, dn + 1, dn + (dr + 1));
+        if (j < dh) {
+          if (i < dr) {
+            this.indices.push(dn, dn + 1, dn + (dr + 1));
+          }
+          if (i > 0) {
+            this.indices.push(dn, dn + (dr + 1), dn + dr);
+          }
         }
-        if (i > 0) {
-          mesh.indices.push(dn, dn + (dr + 1), dn + dr);
-        }
+        dn++;
       }
-      dn++;
     }
   }
-
-  return mesh;
 }
 
-function SpotLight(name, angle$$1) {
-  const gl = getGLContext();
-  const spot = {
-    translation: create$4(),
-    direction: create$4(),
-    angle: angle$$1,
-    depthCamera: new Camera (gl, name + '-cam', angle$$1, 1, 0.1, 100, {x:0,y:0,w:1024,h:1024}),
-    depthTexture:  makeDepthTexture(gl, 1024),
-    updateCamera: function() {
-      copy$4(spot.depthCamera.translation, spot.translation);
-      const ndir = normalize(create$4(), spot.direction);
-      const r2d = 180 / Math.PI;
-      // https://stackoverflow.com/questions/2782647/how-to-get-yaw-pitch-and-roll-from-a-3d-vector
-      // everybody's got an opinion, not sure this is working
-      let yaw, pitch;
-      pitch = Math.asin(ndir[1]);
-      yaw = r2d * Math.asin(ndir[0] / Math.cos(pitch));
-      pitch = r2d * pitch;
-      set$4(spot.depthCamera.rotation, pitch, yaw, 0);
-      console.log(pitch, yaw);
-    },
-    renderDepth: function(scene) {
-      gl.bindFramebuffer(gl.FRAMEBUFFER, spot.depthTexture.buffer);
-      gl.clearColor(0.0, 0.0, 0.0, 1.0);
-      gl.clearDepth(1.0);
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-      spot.depthCamera.render(scene);
-    }
-  };
-  return spot;
+class SpotLight {
+  constructor (name, intensity, color, angle$$1) {
+    this.name = name;
+    this.intensity = intensity;
+    this.color = color;
+    this.angle = angle$$1;
+    this.translation = create$4();
+    this.direction = create$4();
+  }
 }
 
-function PointLight(name, intensity, color) {
-  const point = {
-    translation: create$4(),
-    intensity,
-    color,
-  };
-  return point;
+class PointLight {
+  constructor (name, intensity, color) {
+    this.name = name;
+    this.intensity = intensity;
+    this.color = color;
+    this.translation = create$4();
+  }
 }
 
 // Core Imports
 
-export { Camera, Mesh, Model, Scene, Quad, Shader, getGLContext, setGLContext, initShaderProgram, loadShader, loadTexture, loadMesh, loadCubeMap, makeGenericTexture, makeFramebuffer, makeDepthTexture, BoxMesh, PlaneMesh, SphereMesh, SpotLight, PointLight, OrthographicCamera, quat, mat4, vec3 };
+export { Camera, Mesh, Model, Scene, Quad, shader as Shader, getGLContext, setGLContext, initShaderProgram, loadShader, loadTexture, loadMesh, loadCubeMap, makeGenericTexture, makeFramebuffer, makeDepthTexture, BoxMesh, PlaneMesh, SphereMesh, SpotLight, PointLight, OrthographicCamera, quat, mat4, vec3 };

@@ -2,51 +2,53 @@ import {quat, mat4, vec3} from '../../node_modules/gl-matrix/src/gl-matrix';
 import {viewMatrix, projectionMatrix, matrixStack} from './matrix-stack';
 import {getGLContext} from './gl-context';
 
-export default function Camera (name, fov, aspect, near, far, viewport) {
-  const gl = getGLContext();
-  const cam = {
-    name,
-    fov,
-    aspect,
-    near,
-    far,
-    viewport,
-    matrix: mat4.create(),
-    translation: vec3.create(),
-    rotation: vec3.create(),
-    updateMatrix () {
-      const rotQuat = quat.fromEuler(quat.create(), cam.rotation[0], cam.rotation[1], cam.rotation[2]);
-      const rotMat = mat4.fromQuat(mat4.create(), rotQuat);
-      mat4.copy(cam.matrix, mat4.create());
-      mat4.translate(cam.matrix, cam.matrix, cam.translation);
-      mat4.multiply(cam.matrix, cam.matrix, rotMat);
-    },
-    getProjection() {
-      return mat4.perspective(mat4.create(), cam.fov * Math.PI / 180, cam.aspect, cam.near, cam.far);
-    },
-    render (scene, parent, overrideShader) {
-      cam.updateMatrix();
-      if (parent) {
-        mat4.multiply(cam.matrix, parent.matrix, cam.matrix);
-      }
+export default class Camera {
+  constructor (name, fov, aspect, near, far, viewport) {
+    this.gl = getGLContext();
+    this.name = name;
+    this.fov = fov;
+    this.aspect = aspect;
+    this.near = near;
+    this.far = far;
+    this.viewport = viewport;
+    this.matrix = mat4.create();
+    this.translation = vec3.create();
+    this.rotation = vec3.create();
+  }
 
-      gl.viewport(cam.viewport.x, cam.viewport.y, cam.viewport.w, cam.viewport.h);
-      gl.enable(gl.SCISSOR_TEST);
-      gl.scissor(cam.viewport.x, cam.viewport.y, cam.viewport.w, cam.viewport.h);
-      mat4.invert(viewMatrix, cam.matrix);
-      mat4.copy(projectionMatrix, cam.getProjection());
+  updateMatrix () {
+    const rotQuat = quat.fromEuler(quat.create(), this.rotation[0], this.rotation[1], this.rotation[2]);
+    const rotMat = mat4.fromQuat(mat4.create(), rotQuat);
+    mat4.copy(this.matrix, mat4.create());
+    mat4.translate(this.matrix, this.matrix, this.translation);
+    mat4.multiply(this.matrix, this.matrix, rotMat);
+  }
 
-      matrixStack.length = 0;
-      matrixStack.push(scene.matrix);
+  getProjection() {
+    return mat4.perspective(mat4.create(), this.fov * Math.PI / 180, this.aspect, this.near, this.far);
+  }
 
-      for (let child of scene.children) {
-        child.draw(overrideShader);
-      }
-
-      matrixStack.pop();
-
-      gl.disable(gl.SCISSOR_TEST);
+  render (scene, parent, overrideShader) {
+    this.updateMatrix();
+    if (parent) {
+      mat4.multiply(this.matrix, parent.matrix, this.matrix);
     }
-  };
-  return cam;
+
+    this.gl.viewport(this.viewport.x, this.viewport.y, this.viewport.w, this.viewport.h);
+    this.gl.enable(this.gl.SCISSOR_TEST);
+    this.gl.scissor(this.viewport.x, this.viewport.y, this.viewport.w, this.viewport.h);
+    mat4.invert(viewMatrix, this.matrix);
+    mat4.copy(projectionMatrix, this.getProjection());
+
+    matrixStack.length = 0;
+    matrixStack.push(scene.matrix);
+
+    for (let child of scene.children) {
+      child.draw(overrideShader);
+    }
+
+    matrixStack.pop();
+
+    this.gl.disable(this.gl.SCISSOR_TEST);
+  }
 }

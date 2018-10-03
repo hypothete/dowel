@@ -2,89 +2,92 @@ import {quat, mat4, vec3, mat3} from '../../node_modules/gl-matrix/src/gl-matrix
 import {projectionMatrix, normalMatrix, viewMatrix, matrixStack} from './matrix-stack';
 import {getGLContext} from './gl-context';
 
-export default function Model (name, mesh, parent, shader) {
-  const gl = getGLContext();
-  const model = {
-    name,
-    mesh,
-    shader,
-    textures: [],
-    parent,
-    children: [],
-    matrix: mat4.create(),
-    translation: vec3.create(),
-    rotation: vec3.create(),
-    scale: vec3.fromValues(1,1,1),
-    updateMatrix: function () {
-      const rotQuat = quat.fromEuler(quat.create(), model.rotation[0], model.rotation[1], model.rotation[2]);
-      const rotMat = mat4.fromQuat(mat4.create(), rotQuat);
-      mat4.copy(model.matrix, mat4.create());
-      mat4.translate(model.matrix, model.matrix, model.translation);
-      mat4.multiply(model.matrix, model.matrix, rotMat);
-      mat4.scale(model.matrix, model.matrix, model.scale);
-    },
-    draw: function (overrideShader) {
-      model.updateMatrix();
-      let parentModelMatrix = matrixStack[matrixStack.length - 1];
-      let modelMatrix = mat4.multiply(mat4.create(), parentModelMatrix, model.matrix);
-      matrixStack.push(modelMatrix);
+export default class Model {
+  constructor (name, mesh, parent, shader) {
+    this.gl = getGLContext();
+    this.name = name;
+    this.mesh = mesh;
+    this.shader = shader;
+    this.textures = [];
+    this.parent = parent;
+    this.children = [];
+    this.matrix = mat4.create();
+    this.translation = vec3.create();
+    this.rotation = vec3.create();
+    this.scale = vec3.fromValues(1,1,1);
 
-      for (let child of model.children) {
-        child.draw(overrideShader);
-      }
-
-      matrixStack.pop();
-
-      if (typeof model.mesh === 'undefined' || model.mesh == null) {
-        return;
-      }
-
-      gl.cullFace(model.mesh.side || gl.BACK);
-
-      let shader;
-
-      if (overrideShader) {
-        shader = overrideShader;
-      }
-      else {
-        shader = model.shader;
-      }
-      gl.useProgram(shader.shaderProgram);
-
-      gl.uniformMatrix4fv(shader.shaderLocations.uniformLocations.projectionMatrix, false, projectionMatrix);
-      gl.uniformMatrix4fv(shader.shaderLocations.uniformLocations.modelMatrix, false, modelMatrix);
-      gl.uniformMatrix4fv(shader.shaderLocations.uniformLocations.viewMatrix, false, viewMatrix);
-
-      if (typeof shader.shaderLocations.uniformLocations.normalMatrix !== 'undefined') {
-        mat3.normalFromMat4(normalMatrix, modelMatrix);
-        gl.uniformMatrix3fv(shader.shaderLocations.uniformLocations.normalMatrix, false, normalMatrix);
-      }
-
-      for (let texInd = 0; texInd < model.textures.length; texInd++) {
-        let glSlot = 'TEXTURE' + texInd;
-        let uniformLoc = glSlot.toLowerCase();
-        if (shader.shaderLocations.uniformLocations[uniformLoc]) {
-          gl.activeTexture(gl[glSlot]);
-          gl.bindTexture(model.textures[texInd].type, model.textures[texInd]);
-          gl.uniform1i(shader.shaderLocations.uniformLocations[uniformLoc], texInd);
-        }
-      }
-
-      gl.bindVertexArray(model.mesh.vao);
-      if (typeof shader.shaderLocations.attribLocations.instanceOffset0 !== 'undefined') {
-        gl.drawElementsInstanced(gl.TRIANGLES, model.mesh.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0, model.mesh.offsetBuffer.numItems);
-      }
-      else {
-        gl.drawElements(gl.TRIANGLES, model.mesh.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
-      }
-      gl.bindVertexArray(null);
+    // TODO: consider revising this. not obvious
+    if (parent && parent.children) {
+      parent.children.push(this);
     }
-  };
-  if (parent && parent.children) {
-    parent.children.push(model);
+    // TODO: maybe move to method?
+    if (this.mesh) {
+      this.mesh.initializeBuffers(shader.shaderLocations);
+    }
   }
-  if (model.mesh) {
-    model.mesh.initializeBuffers(shader.shaderLocations);
+  updateMatrix () {
+    const rotQuat = quat.fromEuler(quat.create(), this.rotation[0], this.rotation[1], this.rotation[2]);
+    const rotMat = mat4.fromQuat(mat4.create(), rotQuat);
+    mat4.copy(this.matrix, mat4.create());
+    mat4.translate(this.matrix, this.matrix, this.translation);
+    mat4.multiply(this.matrix, this.matrix, rotMat);
+    mat4.scale(this.matrix, this.matrix, this.scale);
   }
-  return model;
+
+  draw (overrideShader) {
+    this.updateMatrix();
+    let parentModelMatrix = matrixStack[matrixStack.length - 1];
+    let modelMatrix = mat4.multiply(mat4.create(), parentModelMatrix, this.matrix);
+    matrixStack.push(modelMatrix);
+
+    for (let child of this.children) {
+      child.draw(overrideShader);
+    }
+
+    matrixStack.pop();
+
+    if (typeof this.mesh === 'undefined' || this.mesh == null) {
+      return;
+    }
+
+    this.gl.cullFace(this.mesh.side || this.gl.BACK);
+
+    let shader;
+
+    if (overrideShader) {
+      shader = overrideShader;
+    }
+    else {
+      shader = this.shader;
+    }
+    this.gl.useProgram(shader.shaderProgram);
+
+    this.gl.uniformMatrix4fv(shader.shaderLocations.uniformLocations.projectionMatrix, false, projectionMatrix);
+    this.gl.uniformMatrix4fv(shader.shaderLocations.uniformLocations.modelMatrix, false, modelMatrix);
+    this.gl.uniformMatrix4fv(shader.shaderLocations.uniformLocations.viewMatrix, false, viewMatrix);
+
+    if (typeof shader.shaderLocations.uniformLocations.normalMatrix !== 'undefined') {
+      mat3.normalFromMat4(normalMatrix, modelMatrix);
+      this.gl.uniformMatrix3fv(shader.shaderLocations.uniformLocations.normalMatrix, false, normalMatrix);
+    }
+
+    for (let texInd = 0; texInd < this.textures.length; texInd++) {
+      let glSlot = 'TEXTURE' + texInd;
+      let uniformLoc = glSlot.toLowerCase();
+      if (shader.shaderLocations.uniformLocations[uniformLoc]) {
+        this.gl.activeTexture(this.gl[glSlot]);
+        this.gl.bindTexture(this.textures[texInd].type, this.textures[texInd]);
+        this.gl.uniform1i(shader.shaderLocations.uniformLocations[uniformLoc], texInd);
+      }
+    }
+
+    this.gl.bindVertexArray(this.mesh.vao);
+    if (typeof shader.shaderLocations.attribLocations.instanceOffset0 !== 'undefined') {
+      this.gl.drawElementsInstanced(this.gl.TRIANGLES, this.mesh.indexBuffer.numItems, this.gl.UNSIGNED_SHORT, 0, this.mesh.offsetBuffer.numItems);
+    }
+    else {
+      this.gl.drawElements(this.gl.TRIANGLES, this.mesh.indexBuffer.numItems, this.gl.UNSIGNED_SHORT, 0);
+    }
+    this.gl.bindVertexArray(null);
+  }
 }

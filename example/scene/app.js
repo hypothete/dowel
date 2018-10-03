@@ -39,7 +39,7 @@ async function init() {
   vec3.set(camera.translation, 0, 1, 0);
   vec3.set(camera.rotation, -10, 0, 0);
 
-  spot = new SpotLight('spot', 0.5);
+  spot = new SpotLight('spot', 1.0, vec3.fromValues(1.0, 1.0, 1.0), 0.5);
   vec3.set(spot.translation, 0, 5, -3);
   vec3.set(spot.direction, 0, -1, 0);
 
