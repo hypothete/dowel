@@ -13,6 +13,7 @@ import {
   makeFramebuffer,
   makeDepthTexture,
   loadCubeMap,
+  makeGBuffer,
 } from './core/textures-buffers';
 import loadMesh from './core/load-mesh';
 // Meshes
@@ -42,6 +43,7 @@ export {
   makeGenericTexture,
   makeFramebuffer,
   makeDepthTexture,
+  makeGBuffer,
   BoxMesh,
   PlaneMesh,
   SphereMesh,

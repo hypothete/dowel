@@ -85,6 +85,43 @@ export function makeFramebuffer () {
   return { buffer: fbo, texture };
 }
 
+export function makeGBuffer () {
+  // Generic GBuffer, 4 RGBA Float32 attachments
+  const gl = getGLContext();
+  const ext = gl.getExtension('EXT_color_buffer_float');
+  if (ext === null) {
+    throw new Error('The EXT_color_buffer_float extension is not supported on this machine.');
+  }
+  const gBuffer = {
+    buffer: gl.createFramebuffer(),
+    textures: []
+  };
+  const attachments = [];
+  gl.bindFramebuffer(gl.FRAMEBUFFER, gBuffer.buffer);
+  checkFramebufferStatus(gl);
+  for (let i = 0; i < 4; i++) {
+    const texture = gl.createTexture();
+    texture.type = gl.TEXTURE_2D;
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F,
+      gl.canvas.width, gl.canvas.height, 0,
+      gl.RGBA, gl.FLOAT, null);
+    // TODO: Fix resizing canvas not jiving with fixed sizes for GBuffer textures
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    const attachment =  gl['COLOR_ATTACHMENT' + i];
+    attachments.push(attachment);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, attachment, gl.TEXTURE_2D, texture, 0);
+    gBuffer.textures.push(texture);
+    checkFramebufferStatus(gl);
+  }
+  gl.drawBuffers(attachments);
+  checkFramebufferStatus(gl);
+  return gBuffer;
+}
+
 export function makeDepthTexture (width, height) {
   const gl = getGLContext();
   gl.activeTexture(gl.TEXTURE0);
@@ -111,4 +148,28 @@ export function makeDepthTexture (width, height) {
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, texture, 0);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   return { buffer: fbo, texture };
+}
+
+function checkFramebufferStatus(gl) {
+  const statusCode = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+  switch(statusCode) {
+  case gl.FRAMEBUFFER_COMPLETE:
+    console.log('Framebuffer status: framebuffer complete.');
+    break;
+  case gl.FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+    console.error('Framebuffer status: incomplete attachment');
+    break;
+  case gl.FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+    console.error('Framebuffer status: missing attachment.');
+    break;
+  case gl.FRAMEBUFFER_INCOMPLETE_DIMENSIONS:
+    console.error('Framebuffer status: incomplete dimensions.');
+    break;
+  case gl.FRAMEBUFFER_UNSUPPORTED:
+    console.error('Framebuffer status: the attachment format is not supported.');
+    break;
+  case gl.FRAMEBUFFER_INCOMPLETE_MULTISAMPLE:
+    console.error('Framebufer status: The values of gl.RENDERBUFFER_SAMPLES are different among attached renderbuffers');
+    break;
+  }
 }
