@@ -4122,6 +4122,17 @@ function makeGenericTexture () {
   return texture;
 }
 
+function makeColorTexture (r, g, b) {
+  const gl = getGLContext();
+  const texture = gl.createTexture();
+  texture.type = gl.TEXTURE_2D;
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA,
+    1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
+    new Uint8Array([r, g, b, 255]));
+  return texture;
+}
+
 async function loadCubeMap(filenames) {
   const gl = getGLContext();
   const texture = gl.createTexture();
@@ -4166,7 +4177,7 @@ function makeFramebuffer () {
   const fbo = gl.createFramebuffer();
   gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
-
+  checkFramebufferStatus(gl);
   return { buffer: fbo, texture };
 }
 
@@ -4183,7 +4194,6 @@ function makeGBuffer () {
   };
   const attachments = [];
   gl.bindFramebuffer(gl.FRAMEBUFFER, gBuffer.buffer);
-  checkFramebufferStatus(gl);
   for (let i = 0; i < 4; i++) {
     const texture = gl.createTexture();
     texture.type = gl.TEXTURE_2D;
@@ -4191,6 +4201,7 @@ function makeGBuffer () {
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F,
       gl.canvas.width, gl.canvas.height, 0,
       gl.RGBA, gl.FLOAT, null);
+    // TODO: Fix resizing canvas not jiving with fixed sizes for GBuffer textures
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
@@ -4199,7 +4210,6 @@ function makeGBuffer () {
     attachments.push(attachment);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, attachment, gl.TEXTURE_2D, texture, 0);
     gBuffer.textures.push(texture);
-    checkFramebufferStatus(gl);
   }
   gl.drawBuffers(attachments);
   checkFramebufferStatus(gl);
@@ -4230,6 +4240,7 @@ function makeDepthTexture (width, height) {
   const fbo = gl.createFramebuffer();
   gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, texture, 0);
+  checkFramebufferStatus(gl);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   return { buffer: fbo, texture };
 }
@@ -5492,4 +5503,4 @@ class PointLight {
 
 // Core Imports
 
-export { Camera, Mesh, Model, Scene, Quad, Shader, getGLContext, setGLContext, loadTexture, loadMesh, loadCubeMap, makeGenericTexture, makeFramebuffer, makeDepthTexture, makeGBuffer, BoxMesh, PlaneMesh, SphereMesh, SpotLight, PointLight, OrthographicCamera, quat, mat4, vec3 };
+export { Camera, Mesh, Model, Scene, Quad, Shader, getGLContext, setGLContext, loadTexture, loadMesh, loadCubeMap, makeGenericTexture, makeFramebuffer, makeDepthTexture, makeColorTexture, makeGBuffer, BoxMesh, PlaneMesh, SphereMesh, SpotLight, PointLight, OrthographicCamera, quat, mat4, vec3 };

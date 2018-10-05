@@ -33,8 +33,8 @@ export default class DeferrdCompositorShader extends Shader {
 
       void main() {
         vec3 defPos = texture(uTexture0, vTextureCoord).rgb;
-        vec2 devUvs = texture(uTexture1, vTextureCoord).rg;
-        float defIdx = texture(uTexture1, vTextureCoord).b;
+        vec3 defCol = texture(uTexture1, vTextureCoord).rgb;
+        float defIdx = texture(uTexture2, vTextureCoord).a;
         vec3 defNrm = texture(uTexture2, vTextureCoord).rgb;
 
         vec3 lightPos = vec3(0.0, 50.0, 100.0);
@@ -43,7 +43,7 @@ export default class DeferrdCompositorShader extends Shader {
         vec3 halfVec = normalize(toView + toLight);
         float lambert = max(dot(defNrm, toLight), 0.0);
         vec3 specular = vec3(1.0) * pow(max(dot(defNrm, halfVec), 0.0), 10.0);
-        vec3 diffuse = vec3(0.0, 0.8, 1.0) * lambert;
+        vec3 diffuse = defCol * lambert;
         vec3 finalColor = specular + diffuse;
 
         fragColor = vec4(finalColor, 1.0);

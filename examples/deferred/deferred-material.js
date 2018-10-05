@@ -43,23 +43,20 @@ export default class DeferredMaterialShader extends Shader {
       in vec3 vVertPos;
       in vec3 vNormal;
 
-      layout(location = 0) out vec4 posBuf;
-      layout(location = 1) out vec4 uvIdxBuf;
-      layout(location = 2) out vec4 nrmBuf;
+      uniform sampler2D uTexture0;
 
+      layout(location = 0) out vec4 posBuf;
+      layout(location = 1) out vec4 colorBuf;
+      layout(location = 2) out vec4 nrmIdxBuf;
 
       void main() {
-        vec3 dummy = vVertPos;
-        vec3 finalColor = vec3(vTextureCoord, 0.0);
-
         posBuf = vec4(vVertPos, 1.0);
-        uvIdxBuf = vec4(vTextureCoord, 0.0, 1.0);
+        colorBuf = vec4(texture(uTexture0, vTextureCoord));
+        nrmIdxBuf = vec4(vNormal, 0.0);
 
         #ifdef index
-          uvIdxBuf.b = float(index);
+          nrmIdxBuf.a = float(index);
         #endif
-
-        nrmBuf = vec4(vNormal, 1.0);
       }
     `;
 
@@ -73,5 +70,6 @@ export default class DeferredMaterialShader extends Shader {
     this.addUniform('uModelMatrix');
     this.addUniform('uViewMatrix');
     this.addUniform('uNormalMatrix');
+    this.addUniform('uTexture0');
   }
 }

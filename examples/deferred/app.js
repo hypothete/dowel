@@ -7,7 +7,8 @@ import {
   PlaneMesh,
   BoxMesh,
   Quad,
-  makeGBuffer
+  makeGBuffer,
+  makeColorTexture
 } from '../../dist/dowel.js';
 
 import DeferredMaterialShader from './deferred-material.js';
@@ -48,12 +49,14 @@ async function init() {
   const planeShader = new DeferredMaterialShader({ fragDefines: { index: 1 } });
   const planeMesh = new PlaneMesh(5, 5, 5, 5);
   const plane = new Model('plane', planeMesh, shapePivot, planeShader);
+  plane.textures.push(new makeColorTexture(255, 8, 32));
   vec3.set(plane.translation, 0, -0.5, 0);
   vec3.set(plane.rotation, -90, 0, 0);
 
   const boxShader = new DeferredMaterialShader({ fragDefines: { index: 2 } });
   const boxMesh = new BoxMesh(1, 1, 1);
   const box = new Model('box', boxMesh, shapePivot, boxShader);
+  box.textures.push(new makeColorTexture(8, 224, 255));
   vec3.set(box.translation, 0, 0.3, 0);
   vec3.set(box.rotation, 35.264, 0, 35.264);
 
