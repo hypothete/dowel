@@ -4018,14 +4018,20 @@ class Quad {
 }
 
 class Shader {
-  constructor (vert, frag) {
+  constructor (vert, frag, compute) {
     this.gl = getGLContext();
     this.shaderProgram = null;
     this.shaderLocations = {
       attribLocations: {},
       uniformLocations: {}
     };
-    this.initShaderProgram(vert, frag);
+    // TODO: not pretty, revisit
+    if (typeof compute !== 'undefined') {
+      this.initComputeProgram(compute);
+    }
+    else {
+      this.initShaderProgram(vert, frag);
+    }
   }
 
   loadShader(type, source) {
@@ -4050,6 +4056,19 @@ class Shader {
     this.shaderProgram = this.gl.createProgram();
     this.gl.attachShader(this.shaderProgram, vertexShader);
     this.gl.attachShader(this.shaderProgram, fragmentShader);
+    this.gl.linkProgram(this.shaderProgram);
+
+    if (!this.gl.getProgramParameter(this.shaderProgram, this.gl.LINK_STATUS)) {
+      const shaderInfo = this.gl.getProgramInfoLog(this.shaderProgram);
+      console.error(`Unable to initialize the shader program: ${shaderInfo}`);
+    }
+  }
+
+  initComputeProgram(csSource) {
+    const computeShader = this.loadShader(this.gl.COMPUTE_SHADER, csSource);
+
+    this.shaderProgram = this.gl.createProgram();
+    this.gl.attachShader(this.shaderProgram, computeShader);
     this.gl.linkProgram(this.shaderProgram);
 
     if (!this.gl.getProgramParameter(this.shaderProgram, this.gl.LINK_STATUS)) {
