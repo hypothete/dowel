@@ -21,6 +21,7 @@ import loadMesh from './core/load-mesh';
 import BoxMesh from './meshes/box-mesh';
 import PlaneMesh from './meshes/plane-mesh';
 import SphereMesh from './meshes/sphere-mesh';
+import CylinderMesh from './meshes/cylinder-mesh';
 
 // Lights
 import SpotLight from './lights/spot-light';
@@ -49,6 +50,7 @@ export {
   BoxMesh,
   PlaneMesh,
   SphereMesh,
+  CylinderMesh,
   SpotLight,
   PointLight,
   OrthographicCamera,

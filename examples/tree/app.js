@@ -2,16 +2,14 @@ import {
   Camera,
   Model,
   Scene,
-  loadMesh,
   loadTexture,
   PointLight,
   setGLContext,
+  CylinderMesh,
   vec3
 } from '../../dist/dowel.js';
 
-import PBRInstancedShader from '../shared/pbr-instanced.js';
 import PBRShader from '../shared/pbr.js';
-import { parallelUniformSurfaceSampling, makeOffsets } from '../shared/poisson.js';
 
 const can = document.querySelector('canvas');
 const gl = can.getContext('webgl2');
@@ -43,41 +41,23 @@ async function init() {
   vec3.set(point.translation,3, 3, 3);
 
   shapePivot = new Model('pivot', null, scene, null, null);
-  vec3.set(shapePivot.translation, 0, 0, -3);
+  vec3.set(shapePivot.translation, 0, 0, -5);
 
   const loaded = await Promise.all([
-    loadTexture('../shared/brdfLUT.png'),
-    loadMesh('./bead.obj'),
-    loadMesh('../shared/bunny.obj')
+    loadTexture('../shared/brdfLUT.png')
   ]);
 
-  const bunnyMesh = loaded[2];
-  const bunnyShader = new PBRShader();
-  const bunny = new Model('bunny', bunnyMesh, shapePivot, bunnyShader);
-  bunny.textures.push(loaded[0]);
-  bunnyShader.setColor(vec3.fromValues(0.47, 0.45, 0.4));
-  bunnyShader.setSpecularColor(vec3.fromValues(1.0, 1.0, 1.0));
-  bunnyShader.setMetalness(0.1);
-  bunnyShader.setRoughness(0.9);
-  bunnyShader.updatePoint(point);
-  bunnyShader.updateCamera(camera);
+  const trunkMesh = new CylinderMesh(0.05, 0.1, 16, 1);
+  const trunkShader = new PBRShader();
+  trunkShader.setColor(vec3.fromValues(0.47, 0.45, 0.4));
+  trunkShader.setSpecularColor(vec3.fromValues(1.0, 1.0, 1.0));
+  trunkShader.setMetalness(0.1);
+  trunkShader.setRoughness(0.9);
+  trunkShader.updatePoint(point);
+  trunkShader.updateCamera(camera);
 
-  const beadMesh = loaded[1];
-
-  const points = parallelUniformSurfaceSampling(bunnyMesh, 20000, 0.02, 3);
-  console.log(points.length);
-  const offsets = makeOffsets(points);
-  beadMesh.offsets = offsets;
-
-  const beadShader = new PBRInstancedShader();
-  const bead = new Model('bead', beadMesh, shapePivot, beadShader);
-  bead.textures.push(loaded[0]);
-  beadShader.setColor(vec3.fromValues(0.1, 0.3, 0.8));
-  beadShader.setSpecularColor(vec3.fromValues(1.0, 1.0, 1.0));
-  beadShader.setMetalness(0.1);
-  beadShader.setRoughness(0.1);
-  beadShader.updatePoint(point);
-  beadShader.updateCamera(camera);
+  const tree = new Branch(vec3.fromValues(0,0.1,0), trunkShader, trunkMesh, 30, loaded[0], shapePivot);
+  vec3.set(tree.model.translation, 0, -1, 0);
 
   gl.enable(gl.CULL_FACE);
   gl.enable(gl.DEPTH_TEST);
@@ -130,4 +110,76 @@ function enableControls () {
   window.addEventListener('keyup', (e) => {
     keys[e.keyCode] = false;
   });
+}
+
+class Branch {
+  constructor(offset, shader, mesh, count, lut, parent, points) {
+    this.count = count;
+    this.lut = lut;
+    this.offset = offset;
+    this.points = points;
+    this.model = new Model('branch-' + count, mesh, parent, shader);
+    this.model.textures.push(lut);
+    vec3.copy(this.model.translation, this.offset);
+
+    vec3.mul(this.model.scale, this.model.scale, vec3.fromValues(0.95, 0.95, 0.95));
+
+    vec3.set(this.model.rotation,
+      180 * vec3.dot(vec3.fromValues(1, 0, 0), offset),
+      0,
+      180 * vec3.dot(vec3.fromValues(0, 0, 1), offset),
+    );
+
+    if (count > 0) {
+      setTimeout(() => {
+        this.addBranch();
+        if (Math.random() > 0.8) {
+          this.addBranch();
+        }
+      }, 100);
+    }
+  }
+
+  addBranch() {
+    const newPos = vec3.copy(vec3.create(), this.model.translation);
+    vec3.add(
+      newPos,
+      this.offset,
+      vec3.fromValues(Math.random() * 0.2 - 0.1, 0, Math.random() * 0.2 - 0.1)
+    );
+
+    vec3.normalize(newPos, newPos);
+    vec3.scale(newPos, newPos, 0.15);
+
+    new Branch(
+      newPos,
+      this.model.shader,
+      this.model.mesh,
+      this.count - 1,
+      this.lut,
+      this.model,
+      this.points
+    );
+  }
+}
+
+function distTo(a, b) {
+  return vec3.len(vec3.sub(vec3.create(), b, a));
+}
+
+function getClosestPoint(pos, points) {
+  const nearest = points.sort((a, b) => {
+    const distA = distTo(pos, a);
+    const distB = distTo(pos, b);
+
+    if (distA < distB) {
+      return -1;
+    }
+    else if (distB < distA) {
+      return 1;
+    }
+    return 0;
+  });
+
+  return nearest(0);
 }

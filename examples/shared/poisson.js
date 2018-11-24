@@ -1,5 +1,5 @@
 import {
-  vec3
+  vec3, mat4
 } from '../../dist/dowel.js';
 
 function getVertexData(mesh, index) {
@@ -253,4 +253,34 @@ export function parallelUniformSurfaceSampling(mesh, numPoints, cellDiagonal, k)
   }
 
   return cells.map(cell => cell.sample).filter(cell => cell !== null);
+}
+
+export function getBitangent(normal) {
+  const up = vec3.fromValues(0, 1, 0);
+  const dn = vec3.fromValues(0, -1, 0);
+  const c1 = vec3.cross(vec3.create(), normal, dn);
+  const c2 = vec3.cross(vec3.create(), normal, up);
+  let tang;
+  if (vec3.length(c1) > vec3.length(c2)) {
+    tang = c1;
+  }
+  else {
+    tang = c2;
+  }
+  return vec3.cross(vec3.create(), tang, normal);
+}
+
+export function makeOffsets(points) {
+  let offsetArray = [];
+  points.forEach(point => {
+    const bitg = getBitangent(point.normal);
+    const lookMat = mat4.targetTo(mat4.create(), vec3.create(), bitg, vec3.fromValues(0, 1, 0));
+    const transMat = mat4.fromTranslation(mat4.create(), point.position);
+    const inst = mat4.mul(mat4.create(), transMat, lookMat);
+    offsetArray = [
+      ...offsetArray,
+      ...inst
+    ];
+  });
+  return offsetArray;
 }
