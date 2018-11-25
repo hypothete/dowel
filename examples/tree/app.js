@@ -65,28 +65,14 @@ async function init() {
       2 * Math.random() - 1,
       2 * Math.random() - 1
     );
-    points.push({
-      position: pos,
-      normal: vec3.fromValues(1,1,1)
-    });
+    points.push(pos);
   }
 
-  // const leafMesh = new SphereMesh(0.01, 8, 8);
-  // leafMesh.offsets = makeOffsets(points);
-
-  // const leafShader = new PBRInstancedShader();
-  // const leaf = new Model('leaf', leafMesh, shapePivot, leafShader);
-  // leaf.textures.push(loaded[0]);
-  // leafShader.setColor(vec3.fromValues(0.1, 0.8, 0.3));
-  // leafShader.setSpecularColor(vec3.fromValues(1.0, 1.0, 1.0));
-  // leafShader.setMetalness(0.1);
-  // leafShader.setRoughness(0.9);
-  // leafShader.updatePoint(point);
-  // leafShader.updateCamera(camera);
-
+  const leafMesh = new SphereMesh(0.01, 8, 8);
+  const leafShader = new PBRInstancedShader();
 
   const tree = new Tree(
-    points.map(point => point.position),
+    points,
     vec3.fromValues(0, -2, 0),
     shapePivot,
     1, 0.1, 0.1, 0.3,
@@ -101,6 +87,21 @@ async function init() {
   let interv = setInterval(() => {
     if (tree.doneGrowing) {
       clearInterval(interv);
+
+      leafMesh.offsets = makeOffsets(tree.reachedLeaves.map(leaf => {
+        return {
+          position: leaf.position,
+          normal: vec3.fromValues(1,1,1)
+        };
+      }));
+      const leaf = new Model('leaf', leafMesh, shapePivot, leafShader);
+      leaf.textures.push(loaded[0]);
+      leafShader.setColor(vec3.fromValues(0.1, 0.8, 0.3));
+      leafShader.setSpecularColor(vec3.fromValues(1.0, 1.0, 1.0));
+      leafShader.setMetalness(0.1);
+      leafShader.setRoughness(0.9);
+      leafShader.updatePoint(point);
+      leafShader.updateCamera(camera);
     }
     tree.grow();
     tree.render(point, camera);
