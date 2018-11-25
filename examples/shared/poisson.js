@@ -221,9 +221,9 @@ export function parallelUniformSurfaceSampling(mesh, numPoints, cellDiagonal, k)
         const trialPt = points[cell.startIndex + j];
         if (
           trialPt &&
-          trialPt.cellId[0] !== cell.cellId[0] ||
+          (trialPt.cellId[0] !== cell.cellId[0] ||
           trialPt.cellId[1] !== cell.cellId[1] ||
-          trialPt.cellId[2] !== cell.cellId[2]
+          trialPt.cellId[2] !== cell.cellId[2])
         ) {
           // no more random points for the cell
           p = phaseGroupCells.length; // break
@@ -233,7 +233,7 @@ export function parallelUniformSurfaceSampling(mesh, numPoints, cellDiagonal, k)
           const neighboringCells = getNeighboringCells(cells, cell.cellId);
           for (let q = 0; q < neighboringCells.length; q++) {
             const nbr = neighboringCells[q];
-            if (nbr.sample) {
+            if (nbr && nbr.sample) {
               const distToSample = vec3.length(
                 vec3.sub(
                   vec3.create(), trialPt.position, nbr.sample.position
@@ -252,7 +252,7 @@ export function parallelUniformSurfaceSampling(mesh, numPoints, cellDiagonal, k)
     }
   }
 
-  return cells.map(cell => cell.sample).filter(cell => cell !== null);
+  return cells.map(cell => cell.sample).filter(sample => !!sample);
 }
 
 export function getBitangent(normal) {

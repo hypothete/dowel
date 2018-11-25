@@ -5,11 +5,15 @@ import {
   loadTexture,
   PointLight,
   setGLContext,
-  CylinderMesh,
-  vec3
+  vec3,
+  SphereMesh,
+  CylinderMesh
 } from '../../dist/dowel.js';
 
+import PBRInstancedShader from '../shared/pbr-instanced.js';
+import { makeOffsets } from '../shared/poisson.js';
 import PBRShader from '../shared/pbr.js';
+import {Tree} from './tree.js';
 
 const can = document.querySelector('canvas');
 const gl = can.getContext('webgl2');
@@ -41,23 +45,66 @@ async function init() {
   vec3.set(point.translation,3, 3, 3);
 
   shapePivot = new Model('pivot', null, scene, null, null);
-  vec3.set(shapePivot.translation, 0, 0, -5);
+  vec3.set(shapePivot.translation, 0, 0.5, -5);
 
   const loaded = await Promise.all([
     loadTexture('../shared/brdfLUT.png')
   ]);
 
-  const trunkMesh = new CylinderMesh(0.05, 0.1, 16, 1);
-  const trunkShader = new PBRShader();
-  trunkShader.setColor(vec3.fromValues(0.47, 0.45, 0.4));
-  trunkShader.setSpecularColor(vec3.fromValues(1.0, 1.0, 1.0));
-  trunkShader.setMetalness(0.1);
-  trunkShader.setRoughness(0.9);
-  trunkShader.updatePoint(point);
-  trunkShader.updateCamera(camera);
+  const branchShader = new PBRShader();
+  branchShader.setColor(vec3.fromValues(0.47, 0.45, 0.4));
+  branchShader.setSpecularColor(vec3.fromValues(1.0, 1.0, 1.0));
+  branchShader.setMetalness(0.1);
+  branchShader.setRoughness(0.9);
+  const branchMesh = new CylinderMesh(0.01, 0.1, 8, 1);
 
-  const tree = new Branch(vec3.fromValues(0,0.1,0), trunkShader, trunkMesh, 30, loaded[0], shapePivot);
-  vec3.set(tree.model.translation, 0, -1, 0);
+  const points = [];
+  for (let i = 0; i < 1000; i++) {
+    const pos = vec3.fromValues(
+      2 * Math.random() - 1,
+      2 * Math.random() - 1,
+      2 * Math.random() - 1
+    );
+    points.push({
+      position: pos,
+      normal: vec3.fromValues(1,1,1)
+    });
+  }
+
+  // const leafMesh = new SphereMesh(0.01, 8, 8);
+  // leafMesh.offsets = makeOffsets(points);
+
+  // const leafShader = new PBRInstancedShader();
+  // const leaf = new Model('leaf', leafMesh, shapePivot, leafShader);
+  // leaf.textures.push(loaded[0]);
+  // leafShader.setColor(vec3.fromValues(0.1, 0.8, 0.3));
+  // leafShader.setSpecularColor(vec3.fromValues(1.0, 1.0, 1.0));
+  // leafShader.setMetalness(0.1);
+  // leafShader.setRoughness(0.9);
+  // leafShader.updatePoint(point);
+  // leafShader.updateCamera(camera);
+
+
+  const tree = new Tree(
+    points.map(point => point.position),
+    vec3.fromValues(0, -2, 0),
+    shapePivot,
+    1, 0.1, 0.1, 0.3,
+    branchShader,
+    branchMesh,
+    2000
+  );
+
+  //tree.grow();
+  tree.render(point, camera);
+
+  let interv = setInterval(() => {
+    if (tree.doneGrowing) {
+      clearInterval(interv);
+    }
+    tree.grow();
+    tree.render(point, camera);
+  }, 10);
 
   gl.enable(gl.CULL_FACE);
   gl.enable(gl.DEPTH_TEST);
@@ -100,7 +147,7 @@ function enableControls () {
   window.addEventListener('wheel', (e) => {
     let dir = e.deltaY / Math.abs(e.deltaY);
     let newZ = shapePivot.translation[2] + dir / 5;
-    vec3.set(shapePivot.translation, 0, 0, newZ);
+    shapePivot.translation[2] = newZ;
   });
 
   window.addEventListener('keydown', (e) => {
@@ -110,76 +157,4 @@ function enableControls () {
   window.addEventListener('keyup', (e) => {
     keys[e.keyCode] = false;
   });
-}
-
-class Branch {
-  constructor(offset, shader, mesh, count, lut, parent, points) {
-    this.count = count;
-    this.lut = lut;
-    this.offset = offset;
-    this.points = points;
-    this.model = new Model('branch-' + count, mesh, parent, shader);
-    this.model.textures.push(lut);
-    vec3.copy(this.model.translation, this.offset);
-
-    vec3.mul(this.model.scale, this.model.scale, vec3.fromValues(0.95, 0.95, 0.95));
-
-    vec3.set(this.model.rotation,
-      180 * vec3.dot(vec3.fromValues(1, 0, 0), offset),
-      0,
-      180 * vec3.dot(vec3.fromValues(0, 0, 1), offset),
-    );
-
-    if (count > 0) {
-      setTimeout(() => {
-        this.addBranch();
-        if (Math.random() > 0.8) {
-          this.addBranch();
-        }
-      }, 100);
-    }
-  }
-
-  addBranch() {
-    const newPos = vec3.copy(vec3.create(), this.model.translation);
-    vec3.add(
-      newPos,
-      this.offset,
-      vec3.fromValues(Math.random() * 0.2 - 0.1, 0, Math.random() * 0.2 - 0.1)
-    );
-
-    vec3.normalize(newPos, newPos);
-    vec3.scale(newPos, newPos, 0.15);
-
-    new Branch(
-      newPos,
-      this.model.shader,
-      this.model.mesh,
-      this.count - 1,
-      this.lut,
-      this.model,
-      this.points
-    );
-  }
-}
-
-function distTo(a, b) {
-  return vec3.len(vec3.sub(vec3.create(), b, a));
-}
-
-function getClosestPoint(pos, points) {
-  const nearest = points.sort((a, b) => {
-    const distA = distTo(pos, a);
-    const distB = distTo(pos, b);
-
-    if (distA < distB) {
-      return -1;
-    }
-    else if (distB < distA) {
-      return 1;
-    }
-    return 0;
-  });
-
-  return nearest(0);
 }
